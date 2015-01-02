@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type">
+    <title>Pattern game</title>
+    <meta content="Tarmo Johannes" id="author">
+	
+	<link type="text/css" rel="stylesheet" href="soundgames.css">
+	
+	<script src="kinetic-v5.1.0.js"></script> <!-- image movement etc-->
+    <!--<script src="shapednoise.js"></script> webaduio, noise and envelopes --> 
+    <script src="ws-functions.js"></script> <!-- websocket functions --> 
+<!--    <script defer="defer" src="noisegame-ui.js"></script>-->
+	<script defer="defer" >
+	
+	var MAX_NOTES = 7, MAX_PITCHES = 6;
+	var INACTIVE = 0; ACTIVE = 1;
+	var color = ["darkgreen", "lawngreen"]; 
+	var value_matrix = []; // values of the notes - []
+	var steps =  [1, 8/7, 4/3,   14/9,  16/9, 2]; // pseudo slendro // kind of natural:[1,11/10, 5/4, 4/3, 3/2, 7/4,2];
+	var baseFrequency = 220; // TODO: sama, mis Csoundi mootoris
+
+// 	function invert(value) {return (value==0) ? 1 : 0;} // since js !(not) operation works only on booleans
+	
+	var note_rect = [[]];  // 2d array with rects and also on-off info [time_index - column][pitch_index - row]
+	
+	      // WEBAUDIO functions --------------------------
+
+      
+    var context; // miks class-ist väljas?
+    var squareDuration = 0.25;
+      
+	function PlayPattern() {  // parem pane see window.onload ja kasuta play tavalise funktsioonina...
+	try {
+		// Fix up for prefixing
+		window.AudioContext = window.AudioContext||window.webkitAudioContext;
+		context = new AudioContext();
+	}
+	catch(e) {
+		alert('Web Audio API is not supported in this browser');
+		return;
+	}  
+	
+	// for compatibility
+		if (!context.createGain)
+			context.createGain = context.createGainNode;
+		if (!context.createDelay)
+			context.createDelay = context.createDelayNode;
+		if (!context.createScriptProcessor)
+			context.createScriptProcessor = context.createJavaScriptNode;
+		
+		this.repeatCount=1;
+		this.delay=4;
+	}
+	
+	PlayPattern.prototype.getPitchIndex =  function(column) { // returns pitchindex (which square is selected in a column) or -1
+		var selected = -1;
+		for (var i=0; i<MAX_PITCHES; i++) {
+			if (note_rect[column][i].getAttr('onoff') == 1 ) {
+				selected = i;
+			}
+		}
+		return selected;
+      }
+	
+	PlayPattern.prototype.playSound = function(frequency, startTime,duration) {
+			
+		var oscillator = context.createOscillator();
+		var gainNode = context.createGain();
+		oscillator.connect(gainNode);
+		gainNode.connect(context.destination);
+		var now = context.currentTime + startTime;
+		var amp = 0.25
+		
+		gainNode.gain.cancelScheduledValues(now);
+		gainNode.gain.linearRampToValueAtTime(0, now );
+		gainNode.gain.linearRampToValueAtTime(amp, now +0.1);
+		gainNode.gain.linearRampToValueAtTime(amp, now +0.1);
+		gainNode.gain.exponentialRampToValueAtTime(0.001, now +duration);
+		gainNode.gain.linearRampTo
+		oscillator.frequency.value = frequency;
+		
+		oscillator.start(now);   
+		oscillator.stop(now+duration);
+	};
+	
+	PlayPattern.prototype.play= function() {
+		var now = context.currentTime;
+		var startTime = 0;
+		var pitchIndex = -1;
+		console.log(this.repeatCount);
+		for (var a= 0; a<=this.repeatCount; a++ ) {
+			for (var i=0;i<MAX_NOTES; i++) {
+				pitchIndex = this.getPitchIndex(i);
+				startTime = a*this.delay*squareDuration+i*squareDuration ;
+				//console.log("Iter, Start: ", a, startTime);
+				if (pitchIndex!=-1) { 
+					this.playSound(baseFrequency*steps[pitchIndex],startTime ,squareDuration);	
+				}
+			}
+		}
+	};
+	
+	 var oscil = new PlayPattern();
+     
+	window.onload = function() {
+		oscil.playSound(10,0.1,0.1) ; // to activate sound engine an let it crackle... - vist pole abi
+		oscil.repeatCount = parseInt(document.myform.repeatCount.value);
+		oscil.delay = parseInt(document.myform.delay.value);
+		document.getElementById("repeat_label").innerHTML = document.getElementById("repeatCount").value;
+		document.getElementById("delay_label").innerHTML = document.getElementById("delay").value;
+		
+		
+     };
+     
+	
+     
+// 	function handleClick(rectangle) {
+// 					console.log("clicked. Object:", rectangle);
+// 		var this_column = rectangle.getAttr("time_index");
+// 		var newValue = (rectangle.getAttr('onoff')==0) ? 1 : 0 ; // toggle the value
+// 			
+// 		if (newValue == 1) // play sound to give idea about the pitch
+// 			oscil.playSound(baseFrequency*steps[rectangle.getAttr("pitch_index")],0.05,0.5);
+// 			
+// 		// check if any other rect is swithced on, and turn it off - only one note selected in a column:
+// 		for (var i=0; i<MAX_PITCHES; i++) {
+// 			if (note_rect[this_column][i].getAttr('onoff') == 1 ) {
+// 				note_rect[this_column][i].setAttr('onoff', 0);
+// 				note_rect[this_column][i].fill(color[INACTIVE]);
+// 			}
+// 		}
+// 		rectangle.setAttr('onoff', newValue);
+// 		rectangle.fill(color[newValue]);
+// 	}
+	
+	var imageObj = new Image();
+      imageObj.onload = function() {
+        var stage = new Kinetic.Stage({
+          container: 'container',
+          width: 300,
+          height: 300
+        });
+        
+        var padding = (stage.getWidth()-8)*0.2/MAX_NOTES;
+		var square_width = 	(stage.getWidth()-8)*0.8/MAX_NOTES;
+		//console.log(padding, square_width);
+		//stage.setHeight();
+        
+        var layer = new Kinetic.Layer();
+        
+        var border_rect = new Kinetic.Rect({
+			width: stage.getWidth()-4,
+			height: (square_width+padding)*MAX_PITCHES+padding,
+			x: 4, y:4,
+			stroke: 'lightgrey',
+			strokeWidth: 3
+		});
+		layer.add(border_rect);
+        
+//         function handleClick(rectangle) {
+// 				console.log("clicked.");
+// 	}
+		
+		for (var column=0; column<MAX_NOTES; column++) {
+			for (var row=0; row<MAX_PITCHES; row++) {
+				note_rect[column][row] = new Kinetic.Rect({
+					pitch_index: row,
+					time_index: column,
+					onoff:0,
+					width: square_width,
+					height: square_width, 
+					x: column*(padding+square_width) + border_rect.x() + padding/2, 
+					y: border_rect.y()+border_rect.getHeight() - (row+1)*(padding+square_width),
+					fill: color[INACTIVE],
+					stroke: color[ACTIVE], 
+					cornerRadius: square_width/8,
+					strokeWidth: 1, 
+				});
+				//note_rect[column][row].setAttr('onoff',0); // add a property about wether on or off default is off
+				layer.add(note_rect[column][row]);
+				
+				
+				// TODO: leia, miks ei saa kasutada eraldi funktsiooni (function handleClick
+				note_rect[column][row].on("touchstart", function () { 
+					var this_column = this.getAttr("time_index");
+					var newValue = (this.getAttr('onoff')==0) ? 1 : 0 ; // toggle the value
+						
+					if (newValue == 1) // play sound to give idea about the pitch
+						oscil.playSound(baseFrequency*steps[this.getAttr("pitch_index")],0.05,0.5);
+						
+					// check if any other rect is swithced on, and turn it off - only one note selected in a column:
+					for (var i=0; i<MAX_PITCHES; i++) {
+						if (note_rect[this_column][i].getAttr('onoff') == 1 ) {
+							note_rect[this_column][i].setAttr('onoff', 0);
+							note_rect[this_column][i].fill(color[INACTIVE]);
+						}
+					}
+					this.setAttr('onoff', newValue);
+					this.fill(color[newValue]);
+					layer.draw();
+				});
+				
+				
+				note_rect[column][row].on("click", function () { 
+					var this_column = this.getAttr("time_index");
+					var newValue = (this.getAttr('onoff')==0) ? 1 : 0 ; // toggle the value
+						
+					if (newValue == 1) // play sound to give idea about the pitch
+						oscil.playSound(baseFrequency*steps[this.getAttr("pitch_index")],0.05,0.5);
+						
+					// check if any other rect is swithced on, and turn it off - only one note selected in a column:
+					for (var i=0; i<MAX_PITCHES; i++) {
+						if (note_rect[this_column][i].getAttr('onoff') == 1 ) {
+							note_rect[this_column][i].setAttr('onoff', 0);
+							note_rect[this_column][i].fill(color[INACTIVE]);
+						}
+					}
+					this.setAttr('onoff', newValue);
+					this.fill(color[newValue]);
+					layer.draw();
+				});
+			}
+			note_rect.push([]); // to define next row
+		}
+        stage.add(layer); 
+        
+        
+        layer.draw(); 
+      };
+      imageObj.src = 'img.png';
+
+	</script>
+  </head>
+  <body><h1>Pattern game  TEST</h1><br>
+    
+    <form name = "myform">
+    
+    <div id="container"></div>
+    
+    Repeat <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=repeatCount.value"
+    onchange="oscil.repeatCount=parseInt(this.value)"> 
+    <output name="repeat_label" for="repeatCount" id="repeat_label">0</output>
+    times<br><br>
+    After <input type="range" class="range" id="delay" min=2 max=10 step=1 value=8 onchange="oscil.delay=parseInt(this.value)" oninput="delay_label.value=delay.value"> 
+    <output name="delay_label" for="delay" id="delay_label">8</output> 
+    units (square durations).
+    <br><br><br>
+    <button type="button" class="button" id="listenButton" onclick="oscil.play()">Listen</button>  
+    <button type="button" class="button" id="sendButton" onclick="sendEvent()" disabled="true">Send to server</button>
+    <br>
+    <br>
+    TODO: different range, register, sound, panning, users name etc<br>
+    <br>
+    
+    <!--
+    <div id="messageText"> </div><br>
+    <br>
+    
+    Server address: <input value="ws://192.168.1.199:8008/ws" id="url" type="text"><br>
+    <button type="button" id="connectButton" onclick="doConnect();">Connect</button>
+    <br>
+    <br>
+    <p><textarea id="outputtext" rows="5" cols="30" readonly></textarea> </p>-->
+   
+	</form>
+   
+   
+  </body>
+</html>
