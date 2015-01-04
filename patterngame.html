@@ -8,15 +8,13 @@
 	<link type="text/css" rel="stylesheet" href="soundgames.css">
 	
 	<script src="kinetic-v5.1.0.js"></script> <!-- image movement etc-->
-    <!--<script src="shapednoise.js"></script> webaduio, noise and envelopes --> 
-    <script src="ws-functions.js"></script> <!-- websocket functions --> 
-<!--    <script defer="defer" src="noisegame-ui.js"></script>-->
+        <script src="ws-functions.js"></script> <!-- websocket functions -->
 	<script defer="defer" >
 	
 	var MAX_NOTES = 7, MAX_PITCHES = 6;
 	var INACTIVE = 0; ACTIVE = 1;
 	var color = ["darkgreen", "lawngreen"]; 
-	var value_matrix = []; // values of the notes - []
+	//var value_matrix = []; // values of the notes - []
 	var steps =  [1, 8/7, 4/3,   14/9,  16/9, 2]; // pseudo slendro // kind of natural:[1,11/10, 5/4, 4/3, 3/2, 7/4,2];
 	var baseFrequency = 220; // TODO: sama, mis Csoundi mootoris
 
@@ -104,7 +102,8 @@
 	 var oscil = new PlayPattern();
      
 	window.onload = function() {
-		oscil.playSound(10,0.1,0.1) ; // to activate sound engine an let it crackle... - vist pole abi
+                doConnect();
+                oscil.playSound(10,0.1,0.1) ; // to activate sound engine an let it crackle... - vist pole abi
 		oscil.repeatCount = parseInt(document.myform.repeatCount.value);
 		oscil.delay = parseInt(document.myform.delay.value);
 		document.getElementById("repeat_label").innerHTML = document.getElementById("repeatCount").value;
@@ -230,14 +229,50 @@
       };
       imageObj.src = 'img.png';
 
+	function getRadioValue(name) {
+		var elements = document.getElementsByName(name);
+		var radioValue;
+		for (var i=0;  i<elements.length; i++) {
+			if (elements[i].checked) {
+				radioValue = elements[i].value;
+			}
+		}
+		return radioValue;
+	}
+	
+	function sendEvent() {
+		// message format: 'pattern' name voice steps: pitch_index11 pitch_index2 etc
+		var parameters = ['pattern'];
+		parameters.push(document.myform.name.value); // TODO: check if there is comma, either split in server may not work
+		parameters.push(getRadioValue("octave"));
+		parameters.push("steps:")
+		// add all pitchindexes (either step number of -1 if nunselected
+		for (var i=0;i<MAX_NOTES; i++) {
+				parameters.push(oscil.getPitchIndex(i));
+		}
+		
+		var messageString = parameters.join(","); // join with comma
+		console.log("To be sent: ",messageString)
+		doSend(messageString);
+		myform.sendButton.disabled = true;
+		setTimeout(function(){ myform.sendButton.disabled = false;},2000);
+	}
+
 	</script>
   </head>
   <body><h1>Pattern game  TEST</h1><br>
     
     <form name = "myform">
-    
+    Your name:<input type="text" id="name" value="Anonymous"></input><br>
+    Octave/range: <input value=0 name="octave" type="radio">low&nbsp;&nbsp; <input
+      checked="checked" value=1 name="octave" type="radio">medium&nbsp;&nbsp;
+    <input value=2 name="octave" type="radio">high <br>
+    <br>
+    <br>
+
     <div id="container"></div>
     
+
     Repeat <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=repeatCount.value"
     onchange="oscil.repeatCount=parseInt(this.value)"> 
     <output name="repeat_label" for="repeatCount" id="repeat_label">0</output>
@@ -253,15 +288,15 @@
     TODO: different range, register, sound, panning, users name etc<br>
     <br>
     
-    <!--
+
     <div id="messageText"> </div><br>
     <br>
     
-    Server address: <input value="ws://192.168.1.199:8008/ws" id="url" type="text"><br>
+    Server address: <input value="ws://localhost:10010/ws" id="url" type="text"><br>
     <button type="button" id="connectButton" onclick="doConnect();">Connect</button>
     <br>
     <br>
-    <p><textarea id="outputtext" rows="5" cols="30" readonly></textarea> </p>-->
+    <p><textarea id="outputtext" rows="5" cols="30" readonly></textarea> </p>
    
 	</form>
    

@@ -1,5 +1,7 @@
 <CsoundSynthesizer>
 <CsOptions>
+-d
+-odac 
 </CsOptions>
 <CsInstruments>
 
@@ -41,9 +43,9 @@ chnset 0, "active"
 
 seed 0
 
-schedule "randomPattern", 0, 0, 0, 1
-schedule "randomPattern", 0, 0, 1, 1
-schedule "randomPattern", 0, 0, 2, 1 ; last 1 if to repeat
+; schedule "randomPattern", 0, 0, 0, 1
+; schedule "randomPattern", 0, 0, 1, 1
+; schedule "randomPattern", 0, 0, 2, 1 ; last 1 if to repeat
 instr randomPattern
 	index = 0
 	ivoice = p4
