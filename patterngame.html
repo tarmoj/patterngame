@@ -241,10 +241,12 @@
 	}
 	
 	function sendEvent() {
-		// message format: 'pattern' name voice steps: pitch_index11 pitch_index2 etc
+		// message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2 etc
 		var parameters = ['pattern'];
 		parameters.push(document.myform.name.value); // TODO: check if there is comma, either split in server may not work
 		parameters.push(getRadioValue("octave"));
+		parameters.push(document.myform.repeatCount.value);
+		parameters.push(document.myform.delay.value);
 		parameters.push("steps:")
 		// add all pitchindexes (either step number of -1 if nunselected
 		for (var i=0;i<MAX_NOTES; i++) {

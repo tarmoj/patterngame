@@ -2,22 +2,15 @@
 #define CSENGINE_H
 
 #include <QThread>
-#ifdef FOR_ADNROID
-    #include "AndroidCsound.hpp"
-#else
-    #include <csound.hpp>
-#endif
+#include <csound/csound.hpp>
+
 
 class CsEngine : public QThread
 {
     Q_OBJECT
 private:
     bool mStop;
-#ifdef FOR_ADNROID
-    AndroidCsound cs;
-#elif FOR_DESKTOP
     Csound cs;
-#endif
 
 public:
     explicit CsEngine();

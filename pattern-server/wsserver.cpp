@@ -9,7 +9,7 @@ QT_USE_NAMESPACE
 
 WsServer::WsServer(quint16 port, QObject *parent) :
     QObject(parent),
-    m_pWebSocketServer(new QWebSocketServer(QStringLiteral("NoiseServer"),
+	m_pWebSocketServer(new QWebSocketServer(QStringLiteral("PatternServer"),
                                             QWebSocketServer::NonSecureMode, this)),
     m_clients()
 {
@@ -19,6 +19,8 @@ WsServer::WsServer(quint16 port, QObject *parent) :
                 this, &WsServer::onNewConnection);
         connect(m_pWebSocketServer, &QWebSocketServer::closed, this, &WsServer::closed);
     }
+	patternQue << QStringList() << QStringList()<<QStringList(); // define the list
+	names << QStringList() << QStringList()<<QStringList();
 }
 
 
@@ -47,12 +49,26 @@ void WsServer::processTextMessage(QString message)
     if (!pClient) {
         return;
     }
-    qDebug()<<message;
+	//qDebug()<<message;
 
-    QStringList messageParts = message.split(" ");
-    if (messageParts[0]=="i") {
-        emit newEvent(message);
-    }
+	QStringList messageParts = message.split(",");
+	// message format: // message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2
+	if (message.startsWith("pattern")) {
+		//emit newEvent(message);
+		int voice = messageParts[2].toInt();
+		//TODO: add name to namesList
+		patternQue[voice].append(message);
+		names[voice].append(messageParts[1]); // store names to list
+		emit namesChanged(voice, names[voice].join("\n"));
+		qDebug()<<"New pattern from "<< messageParts[1] << message;
+		qDebug()<<"Messages in list per voice: "<<voice<<": "<<patternQue[voice].count();
+
+
+
+	}
+
+	if (message.startsWith("new"))  // for testing only. send message from js console of browser wit doSend("new 1") or similar
+		sendFirstMessage(messageParts[1].toInt());
 
 
 }
@@ -72,7 +88,7 @@ void WsServer::socketDisconnected()
         m_clients.removeAll(pClient);
         emit newConnection(m_clients.count());
         pClient->deleteLater();
-    }
+	}
 }
 
 
@@ -86,3 +102,19 @@ void WsServer::sendMessage(QWebSocket *socket, QString message )
 
 }
 
+void WsServer::sendFirstMessage(int voice)
+{
+	if (voice>=patternQue.length() || voice<0)  {// for any case
+		qDebug()<<"patternQue: "<<voice<<" Index out of range";
+		return;
+	}
+	if (patternQue[voice].isEmpty()) {
+		qDebug()<<"patternQue["<<voice<<"] is empty";
+		return;
+	}
+	QString firstMessage = patternQue[voice].takeFirst();
+	qDebug()<<"Messages in list per voice: "<<voice<<": "<<patternQue[voice].count();
+	emit newEvent(firstMessage);
+	names[voice].removeFirst();
+	emit namesChanged(voice, names[voice].join("\n"));
+}

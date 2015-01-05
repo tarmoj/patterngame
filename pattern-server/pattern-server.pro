@@ -1,8 +1,10 @@
 TEMPLATE = app
 
-QT += qml quick widgets
+QT += qml quick widgets websockets
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    wsserver.cpp \
+    csengine.cpp
 
 RESOURCES += qml.qrc
 
@@ -11,3 +13,9 @@ QML_IMPORT_PATH =
 
 # Default rules for deployment.
 include(deployment.pri)
+
+HEADERS += \
+    wsserver.h \
+    csengine.h
+
+LIBS += -lcsound64 -lsndfile
