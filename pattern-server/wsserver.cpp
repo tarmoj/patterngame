@@ -21,6 +21,8 @@ WsServer::WsServer(quint16 port, QObject *parent) :
     }
 	patternQue << QStringList() << QStringList()<<QStringList(); // define the list
 	names << QStringList() << QStringList()<<QStringList();
+	freeToPlay<<1<<1<<1;
+
 }
 
 
@@ -62,9 +64,9 @@ void WsServer::processTextMessage(QString message)
 		emit namesChanged(voice, names[voice].join("\n"));
 		qDebug()<<"New pattern from "<< messageParts[1] << message;
 		qDebug()<<"Messages in list per voice: "<<voice<<": "<<patternQue[voice].count();
-
-
-
+		if (freeToPlay[voice]) {
+			sendFirstMessage(voice);
+		}
 	}
 
 	if (message.startsWith("new"))  // for testing only. send message from js console of browser wit doSend("new 1") or similar
@@ -104,6 +106,11 @@ void WsServer::sendMessage(QWebSocket *socket, QString message )
 
 void WsServer::sendFirstMessage(int voice)
 {
+	if (!freeToPlay[voice]) {
+		qDebug()<<"Voice "<<voice<<" is not free to play!";
+		return;
+	}
+
 	if (voice>=patternQue.length() || voice<0)  {// for any case
 		qDebug()<<"patternQue: "<<voice<<" Index out of range";
 		return;
@@ -114,7 +121,15 @@ void WsServer::sendFirstMessage(int voice)
 	}
 	QString firstMessage = patternQue[voice].takeFirst();
 	qDebug()<<"Messages in list per voice: "<<voice<<": "<<patternQue[voice].count();
+	freeToPlay[voice]=0;
 	emit newMessage(firstMessage);
 	names[voice].removeFirst();
 	emit namesChanged(voice, names[voice].join("\n"));
+
+}
+
+void WsServer::setFreeToPlay(int voice)
+{
+	freeToPlay[voice]=1;
+	sendFirstMessage(voice);
 }

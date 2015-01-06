@@ -3,15 +3,15 @@ import QtQuick.Controls 1.2
 
 Rectangle {
     id: top
-    width: 200
-    height: 300
+    width: 300
+    height: 500
     color: "black"
     border.color: "grey"
-    property int maxRows: 6
-    property int maxColumns: 7
+    property int maxRows: 10
+    property int maxColumns: 10
     property int voice: 0
     property string name: "Nobody"
-    property string namesInQue: "1,2,3"
+    property string namesInQue
     property color activeColor: "lightgreen"
     property color inActiveColor: "darkgreen"
     //TODO: active and inactive color as properties
@@ -43,50 +43,10 @@ Rectangle {
         anchors.fill: parent
         spacing: 10
 
-        Row {
-            id: row1
-
-            Text {
-                id: text1
-                color: "#ffffff"
-                text: qsTr("Name: ")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: nameLabel
-                color: "#ffffff"
-                text: name
-                font.pixelSize: 12
-            }
-
+        Text {
+            color:  "#ffffff"
+            text: qsTr("Names in que:")
         }
-
-        Row {
-            id: row2
-
-            Text {
-                id: text2
-                color: "#ffffff"
-                text: qsTr("Square duration: ")
-                font.pixelSize: 12
-            }
-
-            Text {
-                id: sqauareDurationLabel
-                color: "#ffffff"
-                text: qsTr("0")
-                font.pixelSize: 12
-            }
-
-        }
-
-        Button {
-            text: "Clear"
-            onClicked: clearSquares();
-        }
-
-
 
         TextArea  {
             //id: namesInQue
@@ -96,6 +56,53 @@ Rectangle {
             readOnly: true
 
         }
+
+        Row {
+            id: row1
+
+            Text {
+                id: text1
+                color: "#ffffff"
+                text: qsTr("Currently playing: ")
+                font.pixelSize: 16
+            }
+
+            Text {
+                id: nameLabel
+                color: "yellow"
+                text: name
+                font.pixelSize: 16
+            }
+
+        }
+
+//        Row {
+//            id: row2
+
+//            Text {
+//                id: text2
+//                color: "#ffffff"
+//                text: qsTr("Square duration: ")
+//                font.pixelSize: 12
+//            }
+
+//            Text {
+//                id: sqauareDurationLabel
+//                color: "#ffffff"
+//                text: qsTr("0")
+//                font.pixelSize: 12
+//            }
+
+//        }
+
+//        Button {
+//            text: "Clear"
+//            onClicked: clearSquares();
+//        }
+
+
+
+
 
         Row {
             spacing: 4

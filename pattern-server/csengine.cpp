@@ -34,14 +34,20 @@ void CsEngine::run()
 
     // kas siin üldse performance threadi vaja? vt. soundcarpet v CsdPlayerQt
 
-    MYFLT noiseCount = 0;
-    while (!mStop  && perfThread.GetStatus() == 0 ) {
-        usleep(10000);  // ? et ei teeks tööd kogu aeg
-        MYFLT counter = getChannel("counter");
-        if (noiseCount!=counter) {
-            emit newCounterValue(int(counter));
-            noiseCount = counter;
-        }
+	QList <MYFLT> oldActive, active;
+	oldActive <<  0 << 0 <<0; // perhaps there is better way to define an empty list;
+	active <<  0 << 0 <<0;
+
+	while (!mStop  && perfThread.GetStatus() == 0 ) {
+		usleep(100000);  // ? et ei teeks tööd kogu aeg
+		for (int i=0;i<3;i++) {
+			active[i] = getChannel("active"+QString::number(i+1));
+			if (active[i]!=oldActive[i] && active[i]==0) { // instruments has ended
+				qDebug()<<"Active "<<i<<" "<<active[i];
+				emit sendNewPattern(i);
+			}
+			oldActive[i] = active[i];
+		}
     }
     qDebug()<<"Stopping thread";
     perfThread.Stop();
@@ -82,8 +88,7 @@ void CsEngine::handleMessage(QString message)
 	QString voice = messageParts[2];
 	QString repeatNtimes = messageParts[3];
 	QString afterNSquares = messageParts[4];
-	//QString steps = message.right(message.length()-message.indexOf("steps:")); // correct?
-	//steps.remove("steps:,");
+	// prepare steps for compileOrc:
 	QString code = "";
 	for (int j=0, i=messageParts.indexOf("steps:")+1 ; i<messageParts.length(); i++, j++ ) { // statements to store steps into 2d array giMartix[voice][step]
 		code += "giMatrix["+voice+"]["+QString::number(j) + "] = " + messageParts[i] +  "\n";

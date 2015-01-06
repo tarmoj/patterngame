@@ -11,12 +11,12 @@
         <script src="ws-functions.js"></script> <!-- websocket functions -->
 	<script defer="defer" >
 	
-	var MAX_NOTES = 7, MAX_PITCHES = 6;
+	var MAX_NOTES = 10, MAX_PITCHES = 10;
 	var INACTIVE = 0; ACTIVE = 1;
 	var color = ["darkgreen", "lawngreen"]; 
 	//var value_matrix = []; // values of the notes - []
-	var steps =  [1, 8/7, 4/3,   14/9,  16/9, 2]; // pseudo slendro // kind of natural:[1,11/10, 5/4, 4/3, 3/2, 7/4,2];
-	var baseFrequency = 220; // TODO: sama, mis Csoundi mootoris
+	var steps =  [1, 25/21, 9/7, 7/5, 5/3, 9/5, 15/7, 7/3, 25/9, 3/1 ]; // Bohlen-Pierce just //[1, 8/7, 4/3,   14/9,  16/9, 2]; // pseudo slendro // kind of natural:[1,11/10, 5/4, 4/3, 3/2, 7/4,2];
+	var baseFrequency = 110; // TODO: sama, mis Csoundi mootoris
 
 // 	function invert(value) {return (value==0) ? 1 : 0;} // since js !(not) operation works only on booleans
 	
@@ -86,6 +86,8 @@
 		var now = context.currentTime;
 		var startTime = 0;
 		var pitchIndex = -1;
+		var voice = parseInt(getRadioValue("octave"));
+		console.log("Voice: ",voice);
 		console.log(this.repeatCount);
 		for (var a= 0; a<=this.repeatCount; a++ ) {
 			for (var i=0;i<MAX_NOTES; i++) {
@@ -93,7 +95,7 @@
 				startTime = a*this.delay*squareDuration+i*squareDuration ;
 				//console.log("Iter, Start: ", a, startTime);
 				if (pitchIndex!=-1) { 
-					this.playSound(baseFrequency*steps[pitchIndex],startTime ,squareDuration);	
+					this.playSound(baseFrequency*steps[pitchIndex]*(1<<voice),startTime ,squareDuration);	
 				}
 			}
 		}
@@ -112,6 +114,16 @@
 		
      };
      
+     function getRadioValue(name) {
+		var elements = document.getElementsByName(name);
+		var radioValue;
+		for (var i=0;  i<elements.length; i++) {
+			if (elements[i].checked) {
+				radioValue = elements[i].value;
+			}
+		}
+		return radioValue;
+	}
 	
      
 // 	function handleClick(rectangle) {
@@ -137,12 +149,12 @@
       imageObj.onload = function() {
         var stage = new Kinetic.Stage({
           container: 'container',
-          width: 300,
-          height: 300
+          width: 400,
+          height: 400
         });
         
         var padding = (stage.getWidth()-8)*0.2/MAX_NOTES;
-		var square_width = 	(stage.getWidth()-8)*0.8/MAX_NOTES;
+		var square_width = (stage.getHeight()-24)*0.8/MAX_PITCHES; //((Math.min( (stage.getWidth()-8)*0.8/MAX_NOTES, (stage.getHeight()+8)*0.8/MAX_PITCHES );
 		//console.log(padding, square_width);
 		//stage.setHeight();
         
@@ -229,16 +241,7 @@
       };
       imageObj.src = 'img.png';
 
-	function getRadioValue(name) {
-		var elements = document.getElementsByName(name);
-		var radioValue;
-		for (var i=0;  i<elements.length; i++) {
-			if (elements[i].checked) {
-				radioValue = elements[i].value;
-			}
-		}
-		return radioValue;
-	}
+	
 	
 	function sendEvent() {
 		// message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2 etc
@@ -294,7 +297,7 @@
     <div id="messageText"> </div><br>
     <br>
     
-    Server address: <input value="ws://localhost:10010/ws" id="url" type="text"><br>
+    Server address: <input value="ws://192.168.1.245:10010/ws" id="url" type="text"><br>
     <button type="button" id="connectButton" onclick="doConnect();">Connect</button>
     <br>
     <br>

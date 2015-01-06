@@ -35,9 +35,7 @@ public:
     double getChannel(QString);
     Csound *getCsound();
 signals:
-    //void newSliderValue(int silderno, int value);
-    //void newClient(int clientsCount);
-    void newCounterValue(int value);
+	void sendNewPattern(int voice); // sent when a new pattern can be sent for the voice
 
 public slots:
 	void handleMessage(QString message); //

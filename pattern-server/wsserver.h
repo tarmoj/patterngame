@@ -18,9 +18,12 @@ public:
     ~WsServer();
 
     void sendMessage(QWebSocket *socket, QString message);
+	//TODO: rename Message->Pattern
+	void sendFirstMessage(int voice); // sends signals and necessary info about first message in the que to UI and Csound
+
 
 public Q_SLOTS:
-	void sendFirstMessage(int voice); // sends signals and necessary info about first message in the que to UI and Csound
+	void setFreeToPlay(int voice);
 
 Q_SIGNALS:
     void closed();
@@ -41,6 +44,7 @@ private:
     QList<QWebSocket *> m_clients;
 	QList <QStringList> patternQue; // basically verctor of 3 stringlists, one for every voice
 	QList <QStringList> names;
+	QList <int> freeToPlay;  // flags for voices
 };
 
 

@@ -1,7 +1,7 @@
 <CsoundSynthesizer>
 <CsOptions>
 -d
--odac 
+-odac:system:playback_ -+rtaudio=jack 
 </CsOptions>
 <CsInstruments>
 
@@ -19,16 +19,18 @@ giPelogHarrison[]  fillarray 1, 35/32, 5/4, 21/16, 49/32, 105/64, 7/4, 2
 giBohlenJust[]  fillarray 1, 25/21, 9/7, 7/5, 5/3, 9/5, 15/7, 7/3, 25/9, 3/1 
 
 giSteps[] init 16
-giSteps  =  giBohlenJust ;giBohlenJust ;giPelogHarrison
-giBaseFrequency = cpspch(6.02)
+giSteps  =  giBohlenJust ;giPelogHarrison;giBohlenJust ;
+giBaseFrequency = 110 ;cpspch(5.02)
 
-giPatternLength = 7 ; chech taht would be same as in html interface
+giPatternLength = 10;7 ; check taht would be same as in html interface
 gimaxPitches  lenarray  giSteps
-print gimaxPitches
-giSquareDuration[] fillarray 0.22, 0.55, 0.1
+
+gkSquareDuration[] fillarray 0.25, 0.25, 0.25
+gkClock[] init 3
 giPan[] fillarray 0.5, 1, 0
 
-giMatrix[]  init   3,giPatternLength  ; first dimension - voice, second: step or -1
+
+giMatrix[][]  init   3,giPatternLength  ; first dimension - voice, second: step or -1
 ;giMatrix[]  init   giPatternLength   ; table to contain which step from scale to play. -1 for don't play  0 - 1st step etc
 
 
@@ -37,15 +39,21 @@ gaSignal[] init 3
 gkIsPlaying[] init 3 ; flags the show if the voice is playing
 
 ;CHANNELS:
-chn_k "active", 2
-chnset 0, "active"
-
+chn_k "active1", 2
+chnset 1, "active1" ; if init 1 then it will set to 0 in first k-cycle?
+;
 
 seed 0
 
-; schedule "randomPattern", 0, 0, 0, 1
-; schedule "randomPattern", 0, 0, 1, 1
-; schedule "randomPattern", 0, 0, 2, 1 ; last 1 if to repeat
+; to test:
+
+;gkSquareDuration[0] init 2
+;gkSquareDuration[1] init 1
+;gkSquareDuration[2] init 4
+
+;schedule "randomPattern", 0, 0, 0, 1
+;schedule "randomPattern", 1, 0, 1, 1
+;schedule "randomPattern", 0, 0, 2, 1 ; last 1 if to repeat
 instr randomPattern
 	index = 0
 	ivoice = p4
@@ -58,16 +66,37 @@ loophere:
 	loop_lt index, 1, giPatternLength, loophere
 	schedule "playPattern",0,0,  int(random:i(0,4)), int(random:i(2,8)), ivoice
 	if (iloop>0) then
-		schedule	"randomPattern", (giPatternLength+1)*giSquareDuration[ivoice], 0, ivoice, iloop
+		schedule	"randomPattern", (giPatternLength+1)*i(gkSquareDuration[ivoice]), 0, ivoice, iloop
 	endif
 endin
 
-;schedule "playPattern",0,0,0, 4, 0
-instr playPattern
+alwayson "clock"
+instr clock 
+	gkClock[0] metro 1/gkSquareDuration[0]
+	gkClock[1] metro 1/gkSquareDuration[1]
+	gkClock[2] metro 1/gkSquareDuration[2]
+endin
+
+
+;schedule "playPattern",0.21,0,0, 4, 0
+;schedule "playPattern",0,0,0, 4, 2
+instr playPattern ; takes care thta incoming messages start "on tick"
+	idur = p3
+	p3 = 10 ; for any case
+	ivoice = p6
+	if (gkClock[ivoice]==1) then 
+		event "i", "playPattern_i", 0, idur,p4,p5,p6
+		printk2 gkClock[ivoice] 
+		turnoff	
+	endif
+endin
+
+;schedule "playPattern",0,0,0, 4, 2
+instr playPattern_i
 	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition
 	irepeatAfter = p5 ; repeat after given squareDurations
 	ivoice = p6 ; three voices
-	itotalTime = giPatternLength*giSquareDuration[ivoice] + itimes*irepeatAfter*giSquareDuration[ivoice]
+	itotalTime = giPatternLength*i(gkSquareDuration[ivoice]) + itimes*irepeatAfter*i(gkSquareDuration[ivoice])
 	print ivoice, itotalTime
 	index = 0
 
@@ -76,7 +105,9 @@ instr playPattern
 loophere:
 	istep = giMatrix[ivoice][index] 
 	if (istep != -1) then
-		schedule	"sound", index*giSquareDuration[ivoice], giSquareDuration[ivoice], 0.2, (1<<ivoice)*giBaseFrequency*istep, ivoice 
+		ifreq =	(1<<ivoice)*giBaseFrequency*giSteps[istep]
+		print istep,ifreq
+		schedule	"sound", index*i(gkSquareDuration[ivoice]), i(gkSquareDuration[ivoice]), 0.2,ifreq , ivoice 
 	endif
 	loop_lt index, 1, giPatternLength, loophere
 		
@@ -100,7 +131,6 @@ instr sound
 		asig moogvcf asig*iamp, line(ifreq*6,p3,ifreq*2), 0.9	
 	endif
 	gaSignal[ivoice] = gaSignal[ivoice] + asig
-	
 endin
 
 instr loopPlay
@@ -118,8 +148,8 @@ mark1:
 	
 	gkIsPlaying[ivoice] init 1
 	
-	iloopTime = irepeatAfter * giSquareDuration[ivoice]
-	;ilastLoop = itimes * irepeatAfter * giSquareDuration
+	iloopTime = irepeatAfter * i(gkSquareDuration[ivoice])
+	;ilastLoop = itimes * irepeatAfter * gkSquareDuration
 	print itimes, irepeatAfter ;, ilastLoop
 	
 	if (itimes>0) then 
@@ -130,9 +160,9 @@ mark1:
 	endif
 	
 	
-;	adel1 deltapi  irepeatAfter * giSquareDuration
-;	adel2 deltapi  2 * irepeatAfter *giSquareDuration
-;	adel3 deltapi  3* irepeatAfter * giSquareDuration
+;	adel1 deltapi  irepeatAfter * gkSquareDuration
+;	adel2 deltapi  2 * irepeatAfter *gkSquareDuration
+;	adel3 deltapi  3* irepeatAfter * gkSquareDuration
 ;	delayw gaSignal
 	aout = gaSignal[ivoice] + adelayed
 	aout clip aout, 0, 0dbfs ; for any case
@@ -188,7 +218,7 @@ endin
   <g>255</g>
   <b>255</b>
  </bgcolor>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>17</x>
   <y>72</y>
@@ -207,7 +237,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject type="BSBDisplay" version="2">
+ <bsbObject version="2" type="BSBDisplay">
   <objectName>active</objectName>
   <x>78</x>
   <y>194</y>
@@ -236,7 +266,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>107</y>
@@ -255,7 +285,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>143</y>
@@ -274,7 +304,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject type="BSBSpinBox" version="2">
+ <bsbObject version="2" type="BSBSpinBox">
   <objectName>sound</objectName>
   <x>39</x>
   <y>292</y>

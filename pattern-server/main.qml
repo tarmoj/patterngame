@@ -4,8 +4,8 @@ import Qt.WebSockets 1.0
 
 ApplicationWindow {
     visible: true
-    width: 640
-    height: 480
+    width: 930
+    height: 600
     title: qsTr("Patterngame server")
     property int clientsCount: 4
 

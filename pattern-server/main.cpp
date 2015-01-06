@@ -29,6 +29,9 @@ int main(int argc, char *argv[])
 	qDebug()<<"Csound started";
 
 	QObject::connect(wsServer,SIGNAL(newMessage(QString)),&cs,SLOT(handleMessage(QString)) );
+	QObject::connect(&cs, SIGNAL(sendNewPattern(int)), wsServer, SLOT(setFreeToPlay(int)));
+	//TODO: how to signal UI that an pattern has finished playing? when activeX has turned 0 ?
+	//WHAT if there is no message in the que: somewhere keep a flag up - send now ? in wsServer freeToPlay[voice]
 
     return app.exec();
 }
