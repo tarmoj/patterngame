@@ -25,7 +25,7 @@ public Q_SLOTS:
 Q_SIGNALS:
     void closed();
     void newConnection(int connectionsCount);
-    void newEvent(QString eventString);
+	void newMessage(QString messageString);
 	void namesChanged(int voice, QString names);
 
 

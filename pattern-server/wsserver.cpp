@@ -52,9 +52,9 @@ void WsServer::processTextMessage(QString message)
 	//qDebug()<<message;
 
 	QStringList messageParts = message.split(",");
-	// message format: // message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2
+	// message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2
 	if (message.startsWith("pattern")) {
-		//emit newEvent(message);
+		//emit newMessage(message);
 		int voice = messageParts[2].toInt();
 		//TODO: add name to namesList
 		patternQue[voice].append(message);
@@ -114,7 +114,7 @@ void WsServer::sendFirstMessage(int voice)
 	}
 	QString firstMessage = patternQue[voice].takeFirst();
 	qDebug()<<"Messages in list per voice: "<<voice<<": "<<patternQue[voice].count();
-	emit newEvent(firstMessage);
+	emit newMessage(firstMessage);
 	names[voice].removeFirst();
 	emit namesChanged(voice, names[voice].join("\n"));
 }

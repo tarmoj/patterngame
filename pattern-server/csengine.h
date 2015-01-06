@@ -3,6 +3,8 @@
 
 #include <QThread>
 #include <csound/csound.hpp>
+#include <csound/csPerfThread.hpp>
+#include <QMutex>
 
 
 class CsEngine : public QThread
@@ -11,16 +13,37 @@ class CsEngine : public QThread
 private:
     bool mStop;
     Csound cs;
+    char *m_csd;
+    int errorValue;
+    QString errorString;
+    int sliderCount;
+
+    //QMutex mutex;
 
 public:
-    explicit CsEngine();
-    void run();
-    int open(QString csd);
-    Q_INVOKABLE void stop();
-    Q_INVOKABLE void setChannel(const QString &channel, MYFLT value);
-    Q_INVOKABLE void csEvent(const QString &event_string);
-    //Q_INVOKABLE double getChannel(const char *channel);
+    explicit CsEngine(char *csd);
+	 ~CsEngine();
+	void run();
+    void stop();
+    QString getErrorString();
+    int getErrorValue();
 
+    void setChannel(QString channel, MYFLT value);
+
+
+
+    double getChannel(QString);
+    Csound *getCsound();
+signals:
+    //void newSliderValue(int silderno, int value);
+    //void newClient(int clientsCount);
+    void newCounterValue(int value);
+
+public slots:
+	void handleMessage(QString message); //
+	void csEvent(QString event_string);
+	void compileOrc(QString code);
+	void restart(); // does not work though
 };
 
 #endif // CSENGINE_H

@@ -18,4 +18,4 @@ HEADERS += \
     wsserver.h \
     csengine.h
 
-LIBS += -lcsound64 -lsndfile
+LIBS += -lcsound64 -lsndfile -ldl -lpthread -lcsnd6

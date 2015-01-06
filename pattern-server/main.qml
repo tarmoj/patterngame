@@ -15,8 +15,8 @@ ApplicationWindow {
                console.log(connectionsCount)
                setClientsCount(connectionsCount)
               }
-            onNewEvent: {
-                handleMessage(eventString);
+            onNewMessage: {
+                handleMessage(messageString);
             }
             onNamesChanged: {
                 console.log(voice, names);
@@ -30,9 +30,9 @@ ApplicationWindow {
         clientsCountLabel.text = "Clients: " + count;
     }
 
-    function handleMessage(eventString)  {
-        console.log("Message came in: ",eventString);
-        var messageParts = eventString.split(",");
+    function handleMessage(messageString)  {
+        console.log("Message came in: ",messageString);
+        var messageParts = messageString.split(",");
         if (messageParts[0]=="pattern") {
             var voice = messageParts[2];
             var name = messageParts[1];

@@ -24,11 +24,11 @@ int main(int argc, char *argv[])
 	//mainQml->setProperty("clientsCount",0);
 
 
-//	CsEngine cs;
-//	cs.open("patterngame.csd");
-//	qDebug()<<"Csound started";
-//	sleep(1);
-//	cs.csEvent("i  \"randomPattern\"  0 0 0 1 ");
+	CsEngine cs("patterngame.csd");
+	cs.start();
+	qDebug()<<"Csound started";
+
+	QObject::connect(wsServer,SIGNAL(newMessage(QString)),&cs,SLOT(handleMessage(QString)) );
 
     return app.exec();
 }

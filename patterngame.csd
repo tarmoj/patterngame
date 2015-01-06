@@ -62,7 +62,7 @@ loophere:
 	endif
 endin
 
-;schedule "playPattern",0,0,0, 4
+;schedule "playPattern",0,0,0, 4, 0
 instr playPattern
 	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition
 	irepeatAfter = p5 ; repeat after given squareDurations
@@ -188,7 +188,7 @@ endin
   <g>255</g>
   <b>255</b>
  </bgcolor>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>17</x>
   <y>72</y>
@@ -205,9 +205,9 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 0 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBDisplay">
+ <bsbObject type="BSBDisplay" version="2">
   <objectName>active</objectName>
   <x>78</x>
   <y>194</y>
@@ -236,7 +236,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>107</y>
@@ -253,9 +253,9 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 1 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>143</y>
@@ -272,9 +272,9 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 2 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>sound</objectName>
   <x>39</x>
   <y>292</y>
