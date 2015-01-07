@@ -52,7 +52,7 @@ Rectangle {
             //id: namesInQue
             text: namesInQue
             width: parent.width - 20
-            height: 60
+            height: 80
             readOnly: true
 
         }

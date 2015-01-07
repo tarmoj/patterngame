@@ -4,10 +4,10 @@ import Qt.WebSockets 1.0
 
 ApplicationWindow {
     visible: true
-    width: 930
+    width: 1100
     height: 600
     title: qsTr("Patterngame server")
-    property int clientsCount: 4
+    property int clientsCount: 0
 
     Connections {
             target: wsServer
@@ -22,6 +22,13 @@ ApplicationWindow {
                 console.log(voice, names);
                 patternRects.itemAt(voice).namesInQue = names;
                 console.log(patternRects.itemAt(voice).namesInQue);
+            }
+            onNewBrainValue: {
+                console.log(property, value);
+                if (property=="attention")
+                    attentionMeter.level = value;
+                if (property=="meditation")
+                    meditationMeter.level = value;
             }
 
           }
@@ -89,15 +96,22 @@ ApplicationWindow {
                         voice: index
                     }
                 }
-                /*
 
-                PatternRect  {
-                    id: patternRect2
+                Meter {
+                    id: attentionMeter
+                    height: parent.height
+                    border.color: "orange"
+                    color: mainRect.color
+
                 }
 
-                PatternRect  {
-                    id: patternRect3
-                }*/
+                Meter {
+                    id: meditationMeter
+                    height: parent.height
+                    border.color: "yellow"
+                    color: mainRect.color
+
+                }
             }
         }
 

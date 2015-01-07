@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>PatternRect.qml</file>
+        <file>Meter.qml</file>
     </qresource>
 </RCC>

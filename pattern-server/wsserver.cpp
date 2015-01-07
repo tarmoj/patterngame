@@ -72,6 +72,16 @@ void WsServer::processTextMessage(QString message)
 	if (message.startsWith("new"))  // for testing only. send message from js console of browser wit doSend("new 1") or similar
 		sendFirstMessage(messageParts[1].toInt());
 
+	// for brain-headset
+	// connect also to csound or let QML drive csound
+	if (message.startsWith("attention")) {
+		emit newBrainValue("attention", messageParts[1].toDouble());
+	}
+
+	if (message.startsWith("meditation")) {
+		emit newBrainValue("meditation", messageParts[1].toDouble());
+	}
+
 
 }
 
