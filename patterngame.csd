@@ -8,7 +8,7 @@
 sr = 44100
 nchnls = 2
 0dbfs = 1
-ksmps = 1
+ksmps = 32
 
 #define MAXREPETITIONS  #5#
 
@@ -28,6 +28,7 @@ gimaxPitches  lenarray  giSteps
 gkSquareDuration[] fillarray 0.25, 0.25, 0.25
 gkClock[] init 3
 giPan[] fillarray 0.5, 1, 0
+gkSoundType[] init 3
 
 
 giMatrix[][]  init   3,giPatternLength  ; first dimension - voice, second: step or -1
@@ -47,22 +48,26 @@ chn_k "highBetaRelative", 1
 chn_k "lowGammaRelative", 1
 chn_k "midGammaRelative",1 
 
+
 chnset 1, "active1" ; if init 1 then it will set to 0 in first k-cycle?
 chnset 1,"tempo"
-chnset 0.8, "level"
+chnset 0.5, "level"
+
 ;
 
 seed 0
 
 ; to test:
 
+
+
 ;gkSquareDuration[0] init 2
 ;gkSquareDuration[1] init 1
 ;gkSquareDuration[2] init 4
 
-;schedule "randomPattern", 0, 0, 0, 1
-;schedule "randomPattern", 1, 0, 1, 1
-;schedule "randomPattern", 2.1, 0, 2, 1 ; last 1 if to repeat
+schedule "randomPattern", 0, 0, 0, 1
+schedule "randomPattern", 1, 0, 1, 1
+schedule "randomPattern", 2.1, 0, 2, 1 ; last 1 if to repeat
 instr randomPattern
 	index = 0
 	ivoice = p4
@@ -84,10 +89,13 @@ instr clockAndChannels
 	
 	;gkTempo chnget "tempo" ; 1 - normal, <1 - slower, >1 - faster
 	gkLevel chnget "level"
-	
+
+	gkSoundType[0] chnget "sound1" 
+	gkSoundType[1] chnget "sound2"
+	gkSoundType[2] chnget "sound3"
+		
 	; for brainwavese version:
 	; for brainwaves: ----------
-	kmed chnget "meditation"
 	gkattention = port(chnget:k("attention"),0.1 )
 	gkmeditation = port(chnget:k("meditation"),0.1 )
 	gklowBetaRelative = port(chnget:k("lowBetaRelative"),0.1) 
@@ -147,31 +155,44 @@ instr sound
 	ivoice = p6
 	iatt = 0.05
 	;aenv expseg 0.0001, iatt, 1, p3-iatt, 0.0001
-	aenv adsr 0.01,0.01,0.5, p3/2
+	aenv adsr 0.01,0.01,1, p3/2
 	; TODO: proovi adsr
-	isound chnget "sound"
+	isound = i(gkSoundType[ivoice]) ;chnget "sound"
 	if (isound==0) then 
-		asig poscil aenv,ifreq*(0.5+gkattention*1.5)	 ; gkattention to test only for brainwaves
+		asig poscil 1,ifreq*(0.5+gkattention*1.5)	 ; gkattention to test only for brainwaves
 	elseif (isound==1) then	
-		asig vco2 k(aenv), ifreq
+		asig vco2 1, ifreq
 		asig moogladder asig, line(ifreq*6,p3,ifreq*2), 0.8
 	else
 		asig pinker
-		asig moogvcf asig*iamp, line(ifreq*6,p3,ifreq*2), 0.9	
+		asig moogvcf asig, line(ifreq*6,p3,ifreq*2), 0.9	
 	endif
 	
 	
 	; for brainwaves version:	
 	
-	kchebLevel = 1+gkmeditation
+	kchebLevel = gkmeditation
 	; ei toimi rahuldavalt, - kmeditaioni muutus pole piisavalt kuulda
-	;asig chebyshevpoly asig, 1,  gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel  
+	asig chebyshevpoly asig,0, 1,  gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel  
 	
 ;	1,0, gklowBetaRelative *kchebLevel, 
 ;	0, gkhighBetaRelative*kchebLevel, gklowGammaRelative*kchebLevel, 
 ;	0, gkmidGammaRelative*kchebLevel
 	
-	gaSignal[ivoice] = gaSignal[ivoice] + asig*iamp ;*aenv*iamp
+	
+	gaSignal[ivoice] = gaSignal[ivoice] + asig*iamp *aenv
+endin
+
+;schedule "chebTest",0,30
+instr chebTest
+	aenv linen 0.3, 0.1,p3,0.1
+	kchebLevel = gkmeditation
+	
+	asig = poscil(0.1,220)
+	
+	asig chebyshevpoly asig, 0,1,  gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel
+	outs asig*aenv, asig*aenv
+
 endin
 
 instr loopPlay
@@ -250,8 +271,8 @@ endin
  <objectName/>
  <x>0</x>
  <y>0</y>
- <width>158</width>
- <height>219</height>
+ <width>372</width>
+ <height>317</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="nobackground">
@@ -346,7 +367,7 @@ endin
   <latched>true</latched>
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
-  <objectName>sound</objectName>
+  <objectName>sound1</objectName>
   <x>39</x>
   <y>292</y>
   <width>80</width>
@@ -372,7 +393,7 @@ endin
   <minimum>0</minimum>
   <maximum>2</maximum>
   <randomizable group="0">false</randomizable>
-  <value>0</value>
+  <value>1</value>
  </bsbObject>
  <bsbObject version="2" type="BSBHSlider">
   <objectName>meditation</objectName>
@@ -433,7 +454,7 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.50925926</value>
+  <value>0.00000000</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
@@ -527,7 +548,7 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.88888889</value>
+  <value>0.77777778</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
