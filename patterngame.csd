@@ -8,7 +8,7 @@
 sr = 44100
 nchnls = 2
 0dbfs = 1
-ksmps = 32
+ksmps = 8
 
 #define MAXREPETITIONS  #5#
 
@@ -100,8 +100,8 @@ instr clockAndChannels
 	gkmeditation = port(chnget:k("meditation"),0.1 )
 	gklowBetaRelative = port(chnget:k("lowBetaRelative"),0.1) 
 	gkhighBetaRelative = port(chnget:k("highBetaRelative"),0.1)
-	gklowGammaRelative chnget "lowGammaRelative"
-	gkmidGammaRelative chnget "midGammaRelative"
+	gklowGammaRelative = port(chnget:k("lowGammaRelative"), 0.1)
+	gkmidGammaRelative = port(chnget:k("midGammaRelative"), 0.1)
 	
 	
 	
@@ -159,7 +159,7 @@ instr sound
 	; TODO: proovi adsr
 	isound = i(gkSoundType[ivoice]) ;chnget "sound"
 	if (isound==0) then 
-		asig poscil 1,ifreq*(0.5+gkattention*1.5)	 ; gkattention to test only for brainwaves
+		asig poscil 1,ifreq	 
 	elseif (isound==1) then	
 		asig vco2 1, ifreq
 		asig moogladder asig, line(ifreq*6,p3,ifreq*2), 0.8
@@ -171,9 +171,16 @@ instr sound
 	
 	; for brainwaves version:	
 	
-	kchebLevel = gkmeditation
+	kchebLevel = (gkmeditation+gkattention)/2
 	; ei toimi rahuldavalt, - kmeditaioni muutus pole piisavalt kuulda
-	asig chebyshevpoly asig,0, 1,  gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel  
+	asig chebyshevpoly asig,0, 1, gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel, gklowGammaRelative*kchebLevel, gkmidGammaRelative*kchebLevel  
+	
+	;kvibr 0
+	
+	;ares reson asig, ifreq*(1+gkattention*4), ifreq/16
+	;ares balance ares, asig
+	kmix = gkattention
+	;asig = asig*(1-kmix)+ares*kmix
 	
 ;	1,0, gklowBetaRelative *kchebLevel, 
 ;	0, gkhighBetaRelative*kchebLevel, gklowGammaRelative*kchebLevel, 
@@ -183,17 +190,6 @@ instr sound
 	gaSignal[ivoice] = gaSignal[ivoice] + asig*iamp *aenv
 endin
 
-;schedule "chebTest",0,30
-instr chebTest
-	aenv linen 0.3, 0.1,p3,0.1
-	kchebLevel = gkmeditation
-	
-	asig = poscil(0.1,220)
-	
-	asig chebyshevpoly asig, 0,1,  gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel
-	outs asig*aenv, asig*aenv
-
-endin
 
 instr loopPlay
 	iamp[] init  $MAXREPETITIONS
@@ -226,8 +222,12 @@ mark1:
 ;	adel2 deltapi  2 * irepeatAfter *gkSquareDuration
 ;	adel3 deltapi  3* irepeatAfter * gkSquareDuration
 ;	delayw gaSignal
+	
+	adeclick linen 1,0.1,p3,0.5 ;1,0.1,0.5, 0.001
 	aout = gaSignal[ivoice] + adelayed
-	aout clip aout, 0, 0dbfs ; for any case
+	;aout clip aout, 0, 0dbfs ; for any case
+	; for brain:
+	aout = aout 
 	
 	;adelayed multitap gaSignal, iLooptTime, 1, iLooptTime*2, 0.8, iLooptTime*3, 0.7
 	
@@ -236,7 +236,8 @@ mark1:
 ;	adelayed vdelay gaSignal, adelaytime,  iLooptTime*1000
 
 	;aout = gaSignal + gaDelayed 
-	aL, aR pan2 aout*port(gkLevel,0.02), giPan[ivoice] ; now: hard left, center, hard right
+	aout = aout*port(gkLevel,0.02)*adeclick ;*(0.1+gkattention*0.9)
+	aL, aR pan2 aout, giPan[ivoice] ; now: hard left, center, hard right
 	outs aL, aR
 	gaSignal[ivoice] = 0
 	if (release()==1) then
@@ -251,7 +252,8 @@ instr countInstances
 	chnset gkIsPlaying[0], "active1"
 	chnset gkIsPlaying[1], "active2"
 	chnset gkIsPlaying[2], "active3"
-	
+
+	outvalue 	"active",gkIsPlaying[0]
 	;kactive active "loopPlay" 
 	;chnset  kactive, "active"
 	; later - do in host, check, if "active" < 1 etc
@@ -280,7 +282,7 @@ endin
   <g>255</g>
   <b>255</b>
  </bgcolor>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>17</x>
   <y>72</y>
@@ -299,7 +301,7 @@ endin
   <latch>false</latch>
   <latched>true</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBDisplay">
+ <bsbObject type="BSBDisplay" version="2">
   <objectName>active</objectName>
   <x>78</x>
   <y>194</y>
@@ -328,7 +330,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>107</y>
@@ -347,7 +349,7 @@ endin
   <latch>false</latch>
   <latched>true</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>143</y>
@@ -366,7 +368,7 @@ endin
   <latch>false</latch>
   <latched>true</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>sound1</objectName>
   <x>39</x>
   <y>292</y>
@@ -393,9 +395,9 @@ endin
   <minimum>0</minimum>
   <maximum>2</maximum>
   <randomizable group="0">false</randomizable>
-  <value>0</value>
+  <value>1</value>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
+ <bsbObject type="BSBHSlider" version="2">
   <objectName>meditation</objectName>
   <x>260</x>
   <y>108</y>
@@ -407,13 +409,13 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.00000000</value>
+  <value>0.01851852</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>173</x>
   <y>110</y>
@@ -442,7 +444,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
+ <bsbObject type="BSBHSlider" version="2">
   <objectName>attention</objectName>
   <x>263</x>
   <y>145</y>
@@ -454,13 +456,13 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.00000000</value>
+  <value>0.68518519</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>172</x>
   <y>145</y>
@@ -489,7 +491,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
+ <bsbObject type="BSBHSlider" version="2">
   <objectName>lowBetaRelative</objectName>
   <x>264</x>
   <y>178</y>
@@ -501,13 +503,13 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>1.00000000</value>
+  <value>0.00000000</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>172</x>
   <y>181</y>
@@ -536,7 +538,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
+ <bsbObject type="BSBHSlider" version="2">
   <objectName>highBetaRelative</objectName>
   <x>263</x>
   <y>219</y>
@@ -548,13 +550,13 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.77777778</value>
+  <value>0.00000000</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>172</x>
   <y>220</y>
