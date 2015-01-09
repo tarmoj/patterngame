@@ -30,6 +30,8 @@ int main(int argc, char *argv[])
 
 	QObject::connect(wsServer,SIGNAL(newMessage(QString)),&cs,SLOT(handleMessage(QString)) );
 	QObject::connect(&cs, SIGNAL(sendNewPattern(int)), wsServer, SLOT(setFreeToPlay(int)));
+	QObject::connect(wsServer, SIGNAL(newPropertyValue(QString,double)), &cs, SLOT(handleChannelChange(QString,double)));
+	QObject::connect(wsServer, SIGNAL(newCodeToComplie(QString)) , &cs, SLOT(compileOrc(QString)));
 	//TODO: how to signal UI that an pattern has finished playing? when activeX has turned 0 ?
 	//WHAT if there is no message in the que: somewhere keep a flag up - send now ? in wsServer freeToPlay[voice]
 

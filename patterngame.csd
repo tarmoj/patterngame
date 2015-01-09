@@ -65,9 +65,9 @@ seed 0
 ;gkSquareDuration[1] init 1
 ;gkSquareDuration[2] init 4
 
-schedule "randomPattern", 0, 0, 0, 1
-schedule "randomPattern", 1, 0, 1, 1
-schedule "randomPattern", 2.1, 0, 2, 1 ; last 1 if to repeat
+;schedule "randomPattern", 0, 0, 0, 1
+;schedule "randomPattern", 1, 0, 1, 1
+;schedule "randomPattern", 2.1, 0, 2, 1 ; last 1 if to repeat
 instr randomPattern
 	index = 0
 	ivoice = p4
@@ -393,7 +393,7 @@ endin
   <minimum>0</minimum>
   <maximum>2</maximum>
   <randomizable group="0">false</randomizable>
-  <value>1</value>
+  <value>0</value>
  </bsbObject>
  <bsbObject version="2" type="BSBHSlider">
   <objectName>meditation</objectName>

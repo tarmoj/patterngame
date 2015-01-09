@@ -8,9 +8,9 @@ Rectangle  {
     border.color: "yellow"
     border.width: 4
     radius: 8
-    property double level: 0.5
+    property double level: 0
 
-     Behavior on level { PropertyAnimation { duration: 500} }
+     Behavior on level { PropertyAnimation { duration: 1000} }
 
 //    Rectangle {
 //        id: borderRect

@@ -30,7 +30,8 @@ Q_SIGNALS:
     void newConnection(int connectionsCount);
 	void newMessage(QString messageString);
 	void namesChanged(int voice, QString names);
-	void newBrainValue(QString property, double value);
+	void newPropertyValue(QString property, double value);
+	void newCodeToComplie(QString code);
 
 
 private Q_SLOTS:

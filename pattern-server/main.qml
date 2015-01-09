@@ -23,8 +23,8 @@ ApplicationWindow {
                 patternRects.itemAt(voice).namesInQue = names;
                 console.log(patternRects.itemAt(voice).namesInQue);
             }
-            onNewBrainValue: {
-                console.log(property, value);
+            onNewPropertyValue: {
+                //console.log(property, value);
                 if (property=="attention")
                     attentionMeter.level = value;
                 if (property=="meditation")
@@ -40,14 +40,19 @@ ApplicationWindow {
     function handleMessage(messageString)  {
         console.log("Message came in: ",messageString);
         var messageParts = messageString.split(",");
+        var voice;
         if (messageParts[0]=="pattern") {
-            var voice = messageParts[2];
+            voice = messageParts[2];
             var name = messageParts[1];
-            console.log("Name: ", name)
+            //console.log("Name: ", name)
             patternRects.itemAt(voice).name = name;
             var steps = messageParts.slice(messageParts.indexOf("steps:")+1);
             patternRects.itemAt(voice).setSquares(steps);
 
+        } else if (messageParts[0]=="clear") {  // then voice must be 2nd argument
+            voice = messageParts[1];
+            patternRects.itemAt(voice).clearSquares();
+            patternRects.itemAt(voice).name = "Nobody";
         }
     }
 

@@ -42,6 +42,7 @@ public slots:
 	void csEvent(QString event_string);
 	void compileOrc(QString code);
 	void restart(); // does not work though
+	void handleChannelChange(QString channel, MYFLT value);
 };
 
 #endif // CSENGINE_H

@@ -69,17 +69,20 @@ void WsServer::processTextMessage(QString message)
 		}
 	}
 
+
 	if (message.startsWith("new"))  // for testing only. send message from js console of browser wit doSend("new 1") or similar
 		sendFirstMessage(messageParts[1].toInt());
 
-	// for brain-headset
-	// connect also to csound or let QML drive csound
-	if (message.startsWith("attention")) {
-		emit newBrainValue("attention", messageParts[1].toDouble());
+
+	// send control messages either for brain-headset or csound cahnnels as f.e. "property,attention,0.25", "property,level,0.5"
+	if (message.startsWith("property")) {
+		emit newPropertyValue(messageParts[1], messageParts[2].toDouble());
 	}
 
-	if (message.startsWith("meditation")) {
-		emit newBrainValue("meditation", messageParts[1].toDouble());
+	if (message.startsWith("square")) { // command to change square duration: squareDuration voice duration. Send to csound as code for compileOrc
+		QString code = "gkSquareDuration["+messageParts[1]+"] init "+ messageParts[2];
+		qDebug()<<"Code to compile: "<<code;
+		emit newCodeToComplie(code);
 	}
 
 
@@ -127,6 +130,7 @@ void WsServer::sendFirstMessage(int voice)
 	}
 	if (patternQue[voice].isEmpty()) {
 		qDebug()<<"patternQue["<<voice<<"] is empty";
+		emit newMessage("clear,"+QString::number(voice));
 		return;
 	}
 	QString firstMessage = patternQue[voice].takeFirst();

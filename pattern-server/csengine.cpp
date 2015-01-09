@@ -84,6 +84,8 @@ void CsEngine::handleMessage(QString message)
 	// message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2
 	qDebug()<<"Message in csound: "<<message;
 	//vaja midagi nagu: 1) compileOrc( giMatrix[voice][0] = step1 etc fillarray )  2) ;schedule "playPattern",0,0,nTimes, afterNsquares
+	if (message.startsWith("clear"))
+		return;
 	QStringList messageParts = message.split(",");
 	QString voice = messageParts[2];
 	QString repeatNtimes = messageParts[3];
@@ -118,7 +120,12 @@ void CsEngine::restart()
     stop(); // sets mStop true
     while (mStop) // run sets mStop false again when perftrhead has joined
         usleep(100000);
-    start();
+	start();
+}
+
+void CsEngine::handleChannelChange(QString channel, double value)
+{
+	setChannel(channel, (MYFLT) value);
 }
 
 void CsEngine::setChannel(QString channel, MYFLT value)
