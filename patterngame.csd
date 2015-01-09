@@ -8,7 +8,7 @@
 sr = 44100
 nchnls = 2
 0dbfs = 1
-ksmps = 64
+ksmps = 1
 
 #define MAXREPETITIONS  #5#
 
@@ -39,8 +39,17 @@ gaSignal[] init 3
 gkIsPlaying[] init 3 ; flags the show if the voice is playing
 
 ;CHANNELS:
-chn_k "active1", 2
+; for brainwaves:
+chn_k "attention", 1
+chn_k "meditation", 1
+chn_k "lowBetaRelative", 1
+chn_k "highBetaRelative", 1
+chn_k "lowGammaRelative", 1
+chn_k "midGammaRelative",1 
+
 chnset 1, "active1" ; if init 1 then it will set to 0 in first k-cycle?
+chnset 1,"tempo"
+chnset 0.8, "level"
 ;
 
 seed 0
@@ -53,7 +62,7 @@ seed 0
 
 ;schedule "randomPattern", 0, 0, 0, 1
 ;schedule "randomPattern", 1, 0, 1, 1
-;schedule "randomPattern", 0, 0, 2, 1 ; last 1 if to repeat
+;schedule "randomPattern", 2.1, 0, 2, 1 ; last 1 if to repeat
 instr randomPattern
 	index = 0
 	ivoice = p4
@@ -70,11 +79,29 @@ loophere:
 	endif
 endin
 
-alwayson "clock"
-instr clock 
-	gkClock[0] metro 1/gkSquareDuration[0]
+alwayson "clockAndChannels"
+instr clockAndChannels 
+	
+	;gkTempo chnget "tempo" ; 1 - normal, <1 - slower, >1 - faster
+	gkLevel chnget "level"
+	
+	; for brainwavese version:
+	; for brainwaves: ----------
+	kmed chnget "meditation"
+	gkattention = port(chnget:k("attention"),0.1 )
+	gkmeditation = port(chnget:k("meditation"),0.1 )
+	gklowBetaRelative = port(chnget:k("lowBetaRelative"),0.1) 
+	gkhighBetaRelative = port(chnget:k("highBetaRelative"),0.1)
+	gklowGammaRelative chnget "lowGammaRelative"
+	gkmidGammaRelative chnget "midGammaRelative"
+	
+	
+	
+	; to sync incoming messages:		
+	gkClock[0] metro (0.5+gkattention)*1/gkSquareDuration[0]
 	gkClock[1] metro 1/gkSquareDuration[1]
 	gkClock[2] metro 1/gkSquareDuration[2]
+	
 endin
 
 
@@ -119,10 +146,12 @@ instr sound
 	ifreq =  p5
 	ivoice = p6
 	iatt = 0.05
-	aenv expseg 0.001, iatt, iamp, p3-iatt, 0.0001
+	;aenv expseg 0.0001, iatt, 1, p3-iatt, 0.0001
+	aenv adsr 0.01,0.01,0.5, p3/2
+	; TODO: proovi adsr
 	isound chnget "sound"
 	if (isound==0) then 
-		asig poscil aenv,ifreq
+		asig poscil aenv,ifreq*(0.5+gkattention*1.5)	 ; gkattention to test only for brainwaves
 	elseif (isound==1) then	
 		asig vco2 k(aenv), ifreq
 		asig moogladder asig, line(ifreq*6,p3,ifreq*2), 0.8
@@ -130,7 +159,19 @@ instr sound
 		asig pinker
 		asig moogvcf asig*iamp, line(ifreq*6,p3,ifreq*2), 0.9	
 	endif
-	gaSignal[ivoice] = gaSignal[ivoice] + asig
+	
+	
+	; for brainwaves version:	
+	
+	kchebLevel = 1+gkmeditation
+	; ei toimi rahuldavalt, - kmeditaioni muutus pole piisavalt kuulda
+	;asig chebyshevpoly asig, 1,  gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel  
+	
+;	1,0, gklowBetaRelative *kchebLevel, 
+;	0, gkhighBetaRelative*kchebLevel, gklowGammaRelative*kchebLevel, 
+;	0, gkmidGammaRelative*kchebLevel
+	
+	gaSignal[ivoice] = gaSignal[ivoice] + asig*iamp ;*aenv*iamp
 endin
 
 instr loopPlay
@@ -174,7 +215,7 @@ mark1:
 ;	adelayed vdelay gaSignal, adelaytime,  iLooptTime*1000
 
 	;aout = gaSignal + gaDelayed 
-	aL, aR pan2 aout, giPan[ivoice] ; now: hard left, center, hard right
+	aL, aR pan2 aout*port(gkLevel,0.02), giPan[ivoice] ; now: hard left, center, hard right
 	outs aL, aR
 	gaSignal[ivoice] = 0
 	if (release()==1) then
@@ -235,7 +276,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 0 0</eventLine>
   <latch>false</latch>
-  <latched>false</latched>
+  <latched>true</latched>
  </bsbObject>
  <bsbObject version="2" type="BSBDisplay">
   <objectName>active</objectName>
@@ -283,7 +324,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 1 0</eventLine>
   <latch>false</latch>
-  <latched>false</latched>
+  <latched>true</latched>
  </bsbObject>
  <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
@@ -302,7 +343,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 2 0</eventLine>
   <latch>false</latch>
-  <latched>false</latched>
+  <latched>true</latched>
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>sound</objectName>
@@ -332,6 +373,194 @@ endin
   <maximum>2</maximum>
   <randomizable group="0">false</randomizable>
   <value>0</value>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>meditation</objectName>
+  <x>260</x>
+  <y>108</y>
+  <width>108</width>
+  <height>30</height>
+  <uuid>{ceaf72bd-ea45-4832-a6f5-28fb9834d99d}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>0.00000000</minimum>
+  <maximum>1.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>173</x>
+  <y>110</y>
+  <width>80</width>
+  <height>26</height>
+  <uuid>{d4bddaac-f239-47cd-8fba-8fde41a73fcd}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Meditation</label>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>attention</objectName>
+  <x>263</x>
+  <y>145</y>
+  <width>108</width>
+  <height>30</height>
+  <uuid>{53512250-33af-4df4-badb-1d7d657537e8}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>0.00000000</minimum>
+  <maximum>1.00000000</maximum>
+  <value>0.50925926</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>172</x>
+  <y>145</y>
+  <width>80</width>
+  <height>26</height>
+  <uuid>{c28ebf97-4c5a-496b-8c26-9530354bae4d}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Attention</label>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>lowBetaRelative</objectName>
+  <x>264</x>
+  <y>178</y>
+  <width>108</width>
+  <height>30</height>
+  <uuid>{29189bb2-45ed-4c6c-ad46-00ee2c064799}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>0.00000000</minimum>
+  <maximum>1.00000000</maximum>
+  <value>1.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>172</x>
+  <y>181</y>
+  <width>80</width>
+  <height>26</height>
+  <uuid>{f95640a2-4be1-4c9d-a0d9-06dbfd7cf31b}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Lowbeta</label>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>highBetaRelative</objectName>
+  <x>263</x>
+  <y>219</y>
+  <width>108</width>
+  <height>30</height>
+  <uuid>{9b3079ab-97b1-46e9-bb31-6271b2862802}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>0.00000000</minimum>
+  <maximum>1.00000000</maximum>
+  <value>0.88888889</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>172</x>
+  <y>220</y>
+  <width>80</width>
+  <height>26</height>
+  <uuid>{144456d7-768a-4ade-a4fa-af24c7fdc857}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Highbeta</label>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>
