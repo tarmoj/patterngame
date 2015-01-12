@@ -49,7 +49,7 @@ chn_k "lowGammaRelative", 1
 chn_k "midGammaRelative",1 
 
 
-chnset 1, "active1" ; if init 1 then it will set to 0 in first k-cycle?
+;chnset 1, "active1" ; if init 1 then it will set to 0 in first k-cycle?
 chnset 1,"tempo"
 chnset 0.5, "level"
 
@@ -157,7 +157,23 @@ instr sound
 	;aenv expseg 0.0001, iatt, 1, p3-iatt, 0.0001
 	aenv adsr 0.01,0.01,1, p3/2
 	; TODO: proovi adsr
-	isound = i(gkSoundType[ivoice]) ;chnget "sound"
+	;isound = i(gkSoundType[ivoice]) ;chnget "sound"
+	isound = 0
+	if (ivoice==1) then
+		if i(gkattention)>0.8 && i(gkattention)<=0.9 then	
+			isound = 1
+		elseif i(gkattention)>0.9	then 
+			isound = 2				
+		endif
+	endif
+	
+	if (ivoice==2) then
+		if i(gkmeditation)>0.8 && i(gkmeditation)<=0.9 then	
+			isound = 1
+		elseif i(gkmeditation)>0.9	then 
+			isound = 2				
+		endif
+	endif
 	if (isound==0) then 
 		asig poscil 1,ifreq	 
 	elseif (isound==1) then	
@@ -171,9 +187,11 @@ instr sound
 	
 	; for brainwaves version:	
 	
-	kchebLevel = (gkmeditation+gkattention)/2
+	kchebLevel = gkmeditation
 	; ei toimi rahuldavalt, - kmeditaioni muutus pole piisavalt kuulda
-	asig chebyshevpoly asig,0, 1, gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel, gklowGammaRelative*kchebLevel, gkmidGammaRelative*kchebLevel  
+	;asig chebyshevpoly asig,0, 1, gklowBetaRelative *kchebLevel,  gkhighBetaRelative*kchebLevel, gklowGammaRelative*gkattention, gkmidGammaRelative*gkattention  
+	asig chebyshevpoly asig,0, 1, gkmeditation,  gkmeditation, gkattention, gkattention  
+
 	
 	;kvibr 0
 	
@@ -395,7 +413,7 @@ endin
   <minimum>0</minimum>
   <maximum>2</maximum>
   <randomizable group="0">false</randomizable>
-  <value>1</value>
+  <value>0</value>
  </bsbObject>
  <bsbObject type="BSBHSlider" version="2">
   <objectName>meditation</objectName>
@@ -409,7 +427,7 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.01851852</value>
+  <value>0.86111111</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
@@ -456,7 +474,7 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.68518519</value>
+  <value>0.80555556</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
@@ -503,7 +521,7 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.00000000</value>
+  <value>0.41666667</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
@@ -550,7 +568,7 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.00000000</value>
+  <value>0.40740741</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>

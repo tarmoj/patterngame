@@ -196,9 +196,10 @@
 				note_rect[column][row].on("touchstart", function () { 
 					var this_column = this.getAttr("time_index");
 					var newValue = (this.getAttr('onoff')==0) ? 1 : 0 ; // toggle the value
+					var voice = parseInt(getRadioValue("octave"));
 						
 					if (newValue == 1) // play sound to give idea about the pitch
-						oscil.playSound(baseFrequency*steps[this.getAttr("pitch_index")],0.05,0.5);
+						oscil.playSound(baseFrequency*steps[this.getAttr("pitch_index")]*(1<<voice),0.05,0.5);
 						
 					// check if any other rect is swithced on, and turn it off - only one note selected in a column:
 					for (var i=0; i<MAX_PITCHES; i++) {
@@ -297,7 +298,7 @@
     <div id="messageText"> </div><br>
     <br>
     
-    Server address: <input value="ws://localhost:10010/ws" id="url" type="text"><br>
+    Server address: <input value="ws://192.168.1.199:10010/ws" id="url" type="text"><br>
     <button type="button" id="connectButton" onclick="doConnect();">Connect</button>
     <br>
     <br>
