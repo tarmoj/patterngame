@@ -4,8 +4,8 @@ import Qt.WebSockets 1.0
 
 ApplicationWindow {
     visible: true
-    width: 1100
-    height: 600
+    width: 940
+    height: 580
     title: qsTr("Patterngame server")
     property int clientsCount: 0
 
@@ -23,14 +23,6 @@ ApplicationWindow {
                 patternRects.itemAt(voice).namesInQue = names;
                 console.log(patternRects.itemAt(voice).namesInQue);
             }
-            onNewPropertyValue: {
-                //console.log(property, value);
-                if (property=="attention")
-                    attentionMeter.level = value;
-                if (property=="meditation")
-                    meditationMeter.level = value;
-            }
-
           }
 
     function setClientsCount(count) {
@@ -89,9 +81,6 @@ ApplicationWindow {
                 text: qsTr("Clients: " + clientsCount)
             }
 
-
-
-
             Row {
                 spacing: 10
                 Repeater {
@@ -102,21 +91,6 @@ ApplicationWindow {
                     }
                 }
 
-                Meter {
-                    id: attentionMeter
-                    height: parent.height
-                    border.color: "orange"
-                    color: mainRect.color
-
-                }
-
-                Meter {
-                    id: meditationMeter
-                    height: parent.height
-                    border.color: "yellow"
-                    color: mainRect.color
-
-                }
             }
         }
 
