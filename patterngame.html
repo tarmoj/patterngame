@@ -29,23 +29,7 @@
     var squareDuration = 0.25;
       
 	function PlayPattern() {  // parem pane see window.onload ja kasuta play tavalise funktsioonina...
-	try {
-		// Fix up for prefixing
-		window.AudioContext = window.AudioContext||window.webkitAudioContext;
-		context = new AudioContext();
-	}
-	catch(e) {
-		alert('Web Audio API is not supported in this browser');
-		return;
-	}  
 	
-	// for compatibility
-		if (!context.createGain)
-			context.createGain = context.createGainNode;
-		if (!context.createDelay)
-			context.createDelay = context.createDelayNode;
-		if (!context.createScriptProcessor)
-			context.createScriptProcessor = context.createJavaScriptNode;
 		
 		this.repeatCount=1;
 		this.delay=4;
@@ -64,16 +48,17 @@
 	PlayPattern.prototype.playSound = function(frequency, startTime,duration) {
 			
 		var oscillator = context.createOscillator();
+		oscillator.type = "triangle"; // Square wave
 		var gainNode = context.createGain();
 		oscillator.connect(gainNode);
 		gainNode.connect(context.destination);
 		var now = context.currentTime + startTime;
-		var amp = 0.25
+		var amp = 0.2;
 		
 		gainNode.gain.cancelScheduledValues(now);
 		gainNode.gain.linearRampToValueAtTime(0, now );
-		gainNode.gain.linearRampToValueAtTime(amp, now +0.1);
-		gainNode.gain.linearRampToValueAtTime(amp, now +0.1);
+		gainNode.gain.linearRampToValueAtTime(amp, now +0.01);
+		gainNode.gain.linearRampToValueAtTime(amp, now +0.01);
 		gainNode.gain.exponentialRampToValueAtTime(0.001, now +duration);
 		gainNode.gain.linearRampTo
 		oscillator.frequency.value = frequency;
@@ -95,7 +80,7 @@
 				startTime = a*this.delay*squareDuration+i*squareDuration ;
 				//console.log("Iter, Start: ", a, startTime);
 				if (pitchIndex!=-1) { 
-					this.playSound(baseFrequency*steps[pitchIndex]*(1<<voice),startTime ,squareDuration);	
+					this.playSound(baseFrequency*steps[pitchIndex]*(1<<voice),startTime ,squareDuration*1.25);	
 				}
 			}
 		}
@@ -104,13 +89,35 @@
 	 var oscil = new PlayPattern();
      
 	window.onload = function() {
-                doConnect();
-                oscil.playSound(10,0.1,0.1) ; // to activate sound engine an let it crackle... - vist pole abi
+		doConnect();
+        // webaudio:
+        try {
+		// Fix up for prefixing
+		window.AudioContext = window.AudioContext||window.webkitAudioContext;
+		context = new AudioContext();
+		}
+		catch(e) {
+			alert('Web Audio API is not supported in this browser');
+			return;
+		}  
+	
+		// for compatibility
+		if (!context.createGain)
+			context.createGain = context.createGainNode;
+		if (!context.createDelay)
+			context.createDelay = context.createDelayNode;
+		if (!context.createScriptProcessor)
+			context.createScriptProcessor = context.createJavaScriptNode;
+                //oscil.playSound(10,0.1,0.1) ; // to activate sound engine an let it crackle... - vist pole abi
 		oscil.repeatCount = parseInt(document.myform.repeatCount.value);
 		oscil.delay = parseInt(document.myform.delay.value);
+		
+		// UI values
 		document.getElementById("repeat_label").innerHTML = document.getElementById("repeatCount").value;
 		document.getElementById("delay_label").innerHTML = document.getElementById("delay").value;
-		
+		document.myform.mode.value="0";
+		setMode(0);
+		drawEverything();
 		
      };
      
@@ -145,23 +152,24 @@
 // 		rectangle.fill(color[newValue]);
 // 	}
 	
-	var imageObj = new Image();
-      imageObj.onload = function() {
-        var stage = new Kinetic.Stage({
+	//var imageObj = new Image();
+      //imageObj.onload = function() {  
+      function drawEverything() { 
+       var stage = new Kinetic.Stage({
           container: 'container',
           width: 400,
           height: 400
         });
         
-        var padding = (stage.getWidth()-8)*0.2/MAX_NOTES;
-		var square_width = (stage.getHeight()-24)*0.8/MAX_PITCHES; //((Math.min( (stage.getWidth()-8)*0.8/MAX_NOTES, (stage.getHeight()+8)*0.8/MAX_PITCHES );
+        var padding = (stage.getHeight()-8)*0.2/MAX_PITCHES;
+		var square_width = (stage.getHeight()-8)*0.7/MAX_PITCHES; //(stage.getHeight()-24)*0.8/MAX_PITCHES; //((Math.min( (stage.getWidth()-8)*0.8/MAX_NOTES, (stage.getHeight()+8)*0.8/MAX_PITCHES );
 		//console.log(padding, square_width);
 		//stage.setHeight();
         
         var layer = new Kinetic.Layer();
         
         var border_rect = new Kinetic.Rect({
-			width: stage.getWidth()-4,
+			width: (square_width+padding)*MAX_NOTES+padding,
 			height: (square_width+padding)*MAX_PITCHES+padding,
 			x: 4, y:4,
 			stroke: 'lightgrey',
@@ -199,7 +207,7 @@
 					var voice = parseInt(getRadioValue("octave"));
 						
 					if (newValue == 1) // play sound to give idea about the pitch
-						oscil.playSound(baseFrequency*steps[this.getAttr("pitch_index")]*(1<<voice),0.05,0.5);
+						oscil.playSound(baseFrequency*steps[this.getAttr("pitch_index")]*(1<<voice),0,0.75);
 						
 					// check if any other rect is swithced on, and turn it off - only one note selected in a column:
 					for (var i=0; i<MAX_PITCHES; i++) {
@@ -217,9 +225,9 @@
 				note_rect[column][row].on("click", function () { 
 					var this_column = this.getAttr("time_index");
 					var newValue = (this.getAttr('onoff')==0) ? 1 : 0 ; // toggle the value
-						
+					var voice = parseInt(getRadioValue("octave"));	
 					if (newValue == 1) // play sound to give idea about the pitch
-						oscil.playSound(baseFrequency*steps[this.getAttr("pitch_index")],0.05,0.5);
+						oscil.playSound(baseFrequency*steps[this.getAttr("pitch_index")]*(1<<voice),0,0.75);
 						
 					// check if any other rect is swithced on, and turn it off - only one note selected in a column:
 					for (var i=0; i<MAX_PITCHES; i++) {
@@ -240,9 +248,31 @@
         
         layer.draw(); 
       };
-      imageObj.src = 'img.png';
+      //imageObj.src = 'img.png';
 
-	
+	function setMode(mode) {
+		//var mode = parseInt(document.myform.mode.value);
+		switch (mode) {
+			case 0:
+				MAX_NOTES = 6;
+				MAX_PITCHES = 6;
+				steps = [1, 8/7, 4/3,   14/9,  16/9, 2];
+				drawEverything();
+				break;
+			case 1: 
+				MAX_NOTES = 8;
+				MAX_PITCHES = 8;
+				steps = [1, 35/32, 5/4, 21/16, 49/32, 105/64, 7/4, 2]; // pelog-harrsion
+				drawEverything();
+				break;
+			case 2:
+				MAX_NOTES = 10;
+				MAX_PITCHES = 10;
+				steps = [1, 25/21, 9/7, 7/5, 5/3, 9/5, 15/7, 7/3, 25/9, 3/1 ]; 
+				drawEverything();
+				break;
+		}
+	}
 	
 	function sendEvent() {
 		// message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2 etc
@@ -269,19 +299,20 @@
   <body><h1>Pattern game  TEST</h1><br>
     
     <form name = "myform">
-    Your name:<input type="text" id="name" value="Anonymous"></input><br>
+    Your name:<input type="text" id="name" value="Anonymous"  style="font-size:16px"></input><br>
     Octave/range: <input value=0 name="octave" type="radio">low&nbsp;&nbsp; <input
-      checked="checked" value=1 name="octave" type="radio">medium&nbsp;&nbsp;
+      checked="checked" value=1 name="octave" type="radio">middle&nbsp;&nbsp;
     <input value=2 name="octave" type="radio">high <br>
     <br>
     <br>
-    Choose mode (different set of pitches): 
-     <select>
-	<option value="(Pseudo) Slendro">(Pseudo)selndro </option>
-	<option value="saab">Saab</option>
-	<option value="mercedes">Mercedes</option>
-	<option value="audi">Audi</option>
+    Choose scale (different set of pitches): 
+     <select id="mode" onchange="setMode(parseInt(this.value));"  style="font-size:22px">
+	<option value="0">(Pseudo) slendro (5 steps)</option>
+	<option value="1">Harrison's pelog (7 steps) </option>
+	<option value="2">Bohlen-Pierce justtone (9 steps)</option>
 	</select> 
+	<br><br>
+	Tap or click on the green squares to build thes sound pattern.
 	<br>
     <div id="container"></div>
     
