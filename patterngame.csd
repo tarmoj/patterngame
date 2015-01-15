@@ -19,10 +19,10 @@ giPelogHarrison[]  fillarray 1, 35/32, 5/4, 21/16, 49/32, 105/64, 7/4, 2
 giBohlenJust[]  fillarray 1, 25/21, 9/7, 7/5, 5/3, 9/5, 15/7, 7/3, 25/9, 3/1 
 
 giSteps[] init 16
-giSteps  =  giBohlenJust ;giPelogHarrison;giBohlenJust ;
+giSteps  =  giPseudoSlendro ;giPelogHarrison;giBohlenJust ;
 giBaseFrequency = 110 ;cpspch(5.02)
 
-giPatternLength = 10;7 ; check taht would be same as in html interface
+giPatternLength = 6;7 ; check taht would be same as in html interface
 gimaxPitches  lenarray  giSteps
 
 gkSquareDuration[] fillarray 0.25, 0.25, 0.25
@@ -31,11 +31,14 @@ giPan[] fillarray 0.5, 1, 0
 gkSoundType[] init 3
 
 
-giMatrix[][]  init   3,giPatternLength  ; first dimension - voice, second: step or -1
+giMatrix[][]  init   3,16  ; first dimension - voice, second: step or -1
 ;giMatrix[]  init   giPatternLength   ; table to contain which step from scale to play. -1 for don't play  0 - 1st step etc
 
-
 gaSignal[] init 3
+gkDeviation[] init 3 ; changing delaytime for loopPlay
+gkDeviation[0] init 1
+gkDeviation[1] init 1
+gkDeviation[2] init 1
 
 gkIsPlaying[] init 3 ; flags the show if the voice is playing
 
@@ -57,6 +60,27 @@ seed 0
 ;gkSquareDuration[1] init 1
 ;gkSquareDuration[2] init 4
 
+;schedule "setMode",1,0,1
+;schedule "setMode",2,0,2
+instr setMode ; sets the scale and load right ratios to giSteps
+	imode = p4
+	if (imode==2) then
+		giSteps = giBohlenJust
+		giPatternLength = 10
+		gimaxPitches = 10	
+	elseif (imode==1) then
+		giSteps = giPseudoSlendro
+		giPatternLength = 8
+		gimaxPitches = 8	
+	else  		
+		giSteps = giPseudoSlendro
+		giPatternLength = 6
+		gimaxPitches = 6	
+	endif
+	print imode, giPatternLength, gimaxPitches
+endin
+
+
 ;schedule "randomPattern", 0, 0, 0, 1
 ;schedule "randomPattern", 1, 0, 1, 1
 ;schedule "randomPattern", 2.1, 0, 2, 1 ; last 1 if to repeat
@@ -64,12 +88,14 @@ instr randomPattern
 	index = 0
 	ivoice = p4
 	iloop = p5
+	print giPatternLength
 	
 loophere:
 	giMatrix[ivoice][index] = limit(int(random:i(-gimaxPitches/2,gimaxPitches)), -1, gimaxPitches)
 	
 	print index, giMatrix[ivoice][index]
 	loop_lt index, 1, giPatternLength, loophere
+	
 	schedule "playPattern",0,0,  int(random:i(0,4)), int(random:i(2,8)), ivoice
 	if (iloop>0) then
 		schedule	"randomPattern", (giPatternLength+1)*i(gkSquareDuration[ivoice]), 0, ivoice, iloop
@@ -80,6 +106,12 @@ alwayson "clockAndChannels"
 instr clockAndChannels 
 	
 	;gkTempo chnget "tempo" ; 1 - normal, <1 - slower, >1 - faster
+	chnset gkIsPlaying[0], "active1"
+	chnset gkIsPlaying[1], "active2"
+	chnset gkIsPlaying[2], "active3"
+
+	;outvalue 	"active",gkIsPlaying[0]
+	
 	gkLevel chnget "level"
 
 	gkSoundType[0] chnget "sound1" 
@@ -96,19 +128,19 @@ endin
 
 
 ;schedule "playPattern",0.21,0,0, 4, 0
-;schedule "playPattern",0,0,0, 4, 2
+;schedule "playPattern",0,0,1, 4, 2
 instr playPattern ; takes care thta incoming messages start "on tick"
 	idur = p3
 	p3 = 10 ; for any case
 	ivoice = p6
-	if (gkClock[ivoice]==1) then 
+	if (gkClock[ivoice]==1 && gkIsPlaying[ivoice]==0 ) then 
 		event "i", "playPattern_i", 0, idur,p4,p5,p6
 		printk2 gkClock[ivoice] 
 		turnoff	
 	endif
 endin
 
-;schedule "playPattern",0,0,0, 4, 2
+;schedule "playPattern",0,0,1, 4, 2
 instr playPattern_i
 	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition
 	irepeatAfter = p5 ; repeat after given squareDurations
@@ -153,6 +185,19 @@ instr sound
 	gaSignal[ivoice] = gaSignal[ivoice] + asig*iamp *aenv
 endin
 
+; schedule "deviationLine",0,30,0.5, 0.25, 2
+instr deviationLine ; calculates a factor that will be applied to deltapi line in loopPlay value always from 1 to some lesser value. The line stays at 1 for p5*p3 seconds
+	iendValue = (p4==0) ? 0.0001 : p4 ; protext exp from 0
+	istayAt1 = p5
+	ivoice = p6
+	kdeviation init 1
+	kdeviation linseg 1,p3/2, iendValue, p3/2, 1
+	gkDeviation[ivoice] = kdeviation
+	;gkDeviation[ivoice] interp kdeviation
+;	if (release()==1) then
+;		gkDeviation = 1
+;	endif
+endin
 
 instr loopPlay
 	iamp[] init  $MAXREPETITIONS
@@ -170,35 +215,32 @@ mark1:
 	gkIsPlaying[ivoice] init 1
 	
 	iloopTime = irepeatAfter * i(gkSquareDuration[ivoice])
-	;ilastLoop = itimes * irepeatAfter * gkSquareDuration
+	ilastLoop = itimes * irepeatAfter * i(gkSquareDuration[ivoice])
 	print itimes, irepeatAfter ;, ilastLoop
-	
+		
 	if (itimes>0) then 
-		;adelayed delayr ilastLoop
-		adelayed multitap gaSignal[ivoice], iloopTime, iamp[0], iloopTime*2, iamp[1], iloopTime*3, iamp[2], iloopTime*4, iamp[3], iloopTime*5, iamp[4]  
+		adummy delayr iloopTime*6
+		atime interp gkDeviation[ivoice]
+		;atime += poscil(0.005, 4)
+
+		adel1 deltapi  iloopTime*atime
+		adel2 deltapi  iloopTime*2*atime
+		adel3 deltapi  iloopTime*3*atime
+		adel4 deltapi iloopTime*4*atime
+		adel5 deltapi iloopTime*5*atime
+		
+		adelayed = adel1*iamp[0]+ adel2*iamp[1] + adel3*iamp[2] + adel4*iamp[3] + adel5*iamp[4] 		
+		delayw gaSignal[ivoice]
+		;adelayed multitap gaSignal[ivoice], iloopTime, iamp[0], iloopTime*2, iamp[1], iloopTime*3, iamp[2], iloopTime*4, iamp[3], iloopTime*5, iamp[4]  
 	else
 		adelayed = 0	
 	endif
 	
-	
-;	adel1 deltapi  irepeatAfter * gkSquareDuration
-;	adel2 deltapi  2 * irepeatAfter *gkSquareDuration
-;	adel3 deltapi  3* irepeatAfter * gkSquareDuration
-;	delayw gaSignal
-	
 	adeclick linen 1,0.1,p3,0.5 ;1,0.1,0.5, 0.001
 	aout = gaSignal[ivoice] + adelayed
 	aout clip aout, 0, 0dbfs ; for any case
-	
-	
-	;adelayed multitap gaSignal, iLooptTime, 1, iLooptTime*2, 0.8, iLooptTime*3, 0.7
-	
-;	adelaytime init  iLooptTime*1000
-;	adelaytime expon iLooptTime*1000, p3,  iLooptTime*1000/2
-;	adelayed vdelay gaSignal, adelaytime,  iLooptTime*1000
-
-	;aout = gaSignal + gaDelayed 
 	aout = aout*port(gkLevel,0.02)*adeclick ;*(0.1+gkattention*0.9)
+	
 	aL, aR pan2 aout, giPan[ivoice] ; now: hard left, center, hard right
 	outs aL, aR
 	gaSignal[ivoice] = 0
@@ -207,22 +249,6 @@ mark1:
 	endif
 endin
 
-
-
-alwayson "countInstances"
-instr countInstances
-	chnset gkIsPlaying[0], "active1"
-	chnset gkIsPlaying[1], "active2"
-	chnset gkIsPlaying[2], "active3"
-
-	outvalue 	"active",gkIsPlaying[0]
-	;kactive active "loopPlay" 
-	;chnset  kactive, "active"
-	; later - do in host, check, if "active" < 1 etc
-;	if (changed(kactive)==1 && kactive==0)  then
-;		event "i","randomPattern",0,0,0
-;	endif
-endin
 
 
 </CsInstruments>
@@ -235,7 +261,7 @@ endin
  <objectName/>
  <x>0</x>
  <y>0</y>
- <width>372</width>
+ <width>158</width>
  <height>317</height>
  <visible>true</visible>
  <uuid/>

@@ -87,6 +87,11 @@ void WsServer::processTextMessage(QString message)
 		emit newCodeToComplie(code);
 	}
 
+	//TODO: NB! comma does not suit as separtor!!! use ;
+	if (message.startsWith("schedule") || message.contains("init")) { //right now only schedule or init commands are accepted
+		emit newCodeToComplie(message);
+	}
+
 
 }
 
