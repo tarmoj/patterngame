@@ -11,19 +11,31 @@ nchnls = 2
 ksmps = 8
 
 #define MAXREPETITIONS  #5#
+#define SLENDRO #0#
+#define PELOG #1#
+#define BOHLEN #2#
+
+; TABLES:
+; frequency ratios of the scales
+giPseudoSlendro ftgen 0,0,-10,-2, 1, 8/7, 4/3,   14/9,  16/9, 2
+giPelogHarrison ftgen 0,0,-10,-2, 1, 35/32, 5/4, 21/16, 49/32, 105/64, 7/4, 2
+giBohlenJust  ftgen 0,0,-10, -2, 1, 25/21, 9/7, 7/5, 5/3, 9/5, 15/7, 7/3, 25/9, 3/1 
+
 
 ;GLOBALS: 
-giPseudoSlendro[] fillarray  1, 8/7, 4/3,   14/9,  16/9, 2
-giPelogHarrison[]  fillarray 1, 35/32, 5/4, 21/16, 49/32, 105/64, 7/4, 2
 
-giBohlenJust[]  fillarray 1, 25/21, 9/7, 7/5, 5/3, 9/5, 15/7, 7/3, 25/9, 3/1 
+;giSteps[] init 16
+;giSteps  =  giPseudoSlendro ;giPelogHarrison;giBohlenJust ;
 
-giSteps[] init 16
-giSteps  =  giPseudoSlendro ;giPelogHarrison;giBohlenJust ;
 giBaseFrequency = 110 ;cpspch(5.02)
 
-giPatternLength = 6;7 ; check taht would be same as in html interface
-gimaxPitches  lenarray  giSteps
+giScales[] fillarray giPseudoSlendro, giPelogHarrison, giBohlenJust ; array of id-s to according tables 
+
+; initialize for slendro
+giPatternLength = 6
+gimaxPitches = 6
+
+gkScale init $SLENDRO
 
 gkSquareDuration[] fillarray 0.25, 0.25, 0.25
 gkClock[] init 3
@@ -32,7 +44,7 @@ gkSoundType[] init 3
 
 
 giMatrix[][]  init   3,16  ; first dimension - voice, second: step or -1
-;giMatrix[]  init   giPatternLength   ; table to contain which step from scale to play. -1 for don't play  0 - 1st step etc
+
 
 gaSignal[] init 3
 gkDeviation[] init 3 ; changing delaytime for loopPlay
@@ -44,11 +56,8 @@ gkIsPlaying[] init 3 ; flags the show if the voice is playing
 
 ;CHANNELS:
 
-;chnset 1, "active1" ; if init 1 then it will set to 0 in first k-cycle?
-chnset 1,"tempo"
 chnset 0.5, "level"
 
-;
 
 seed 0
 
@@ -64,16 +73,17 @@ seed 0
 ;schedule "setMode",2,0,2
 instr setMode ; sets the scale and load right ratios to giSteps
 	imode = p4
-	if (imode==2) then
-		giSteps = giBohlenJust
+	gkScale init imode
+	if (imode==$BOHLEN ) then
+		;giSteps = giBohlenJust
 		giPatternLength = 10
 		gimaxPitches = 10	
-	elseif (imode==1) then
-		giSteps = giPseudoSlendro
+	elseif (imode==$PELOG ) then
+		;giSteps = giPseudoSlendro
 		giPatternLength = 8
 		gimaxPitches = 8	
 	else  		
-		giSteps = giPseudoSlendro
+		;giSteps = giPseudoSlendro
 		giPatternLength = 6
 		gimaxPitches = 6	
 	endif
@@ -81,14 +91,14 @@ instr setMode ; sets the scale and load right ratios to giSteps
 endin
 
 
-;schedule "randomPattern", 0, 0, 0, 1
+schedule "randomPattern", 0, 0, 0, 1
 ;schedule "randomPattern", 1, 0, 1, 1
 ;schedule "randomPattern", 2.1, 0, 2, 1 ; last 1 if to repeat
 instr randomPattern
 	index = 0
 	ivoice = p4
 	iloop = p5
-	print giPatternLength
+	;print giPatternLength
 	
 loophere:
 	giMatrix[ivoice][index] = limit(int(random:i(-gimaxPitches/2,gimaxPitches)), -1, gimaxPitches)
@@ -152,9 +162,11 @@ instr playPattern_i
 	schedule "loopPlay", 0, itotalTime,  itimes, irepeatAfter, ivoice  
 	; play sounds
 loophere:
-	istep = giMatrix[ivoice][index] 
+	istep = giMatrix[ivoice][index]
+	print istep 
 	if (istep != -1) then
-		ifreq =	(1<<ivoice)*giBaseFrequency*giSteps[istep]
+			ifreqRatio = tab_i(istep,giScales[i(gkScale)]) 
+		ifreq =	(1<<ivoice)*giBaseFrequency*ifreqRatio  
 		print istep,ifreq
 		schedule	"sound", index*i(gkSquareDuration[ivoice]), i(gkSquareDuration[ivoice]), 0.2,ifreq , ivoice 
 	endif
@@ -197,12 +209,13 @@ instr startDeviation
 	schedule "deviationLine",4,idur,random:i(0.1,0.9), random:i(0.25,0.75), 0 
 endin
 
-; schedule "deviationLine",0,30,0.5, 0.25, 2
+; schedule "deviationLine",0,30,0.75, 0.5, 1
 instr deviationLine ; calculates a factor that will be applied to deltapi line in loopPlay value always from 1 to some lesser value. The line stays at 1 for p5*p3 seconds
 	iendValue = (p4==0) ? 0.0001 : p4 ; protext exp from 0
 	ipeakTime = p3*p5
 	ivoice = p6
 	kdeviation init 1
+	;kdeviation poscil 0.
 	kdeviation linseg 1,ipeakTime, iendValue, p3-ipeakTime, 1
 	gkDeviation[ivoice] = kdeviation
 	;gkDeviation[ivoice] interp kdeviation
@@ -210,6 +223,7 @@ instr deviationLine ; calculates a factor that will be applied to deltapi line i
 ;		gkDeviation = 1
 ;	endif
 endin
+gkDeviation[1] init 0.05
 
 instr loopPlay
 	iamp[] init  $MAXREPETITIONS
@@ -233,7 +247,8 @@ mark1:
 	if (itimes>0) then 
 		adummy delayr iloopTime*6
 		atime interp gkDeviation[ivoice]
-		;atime += poscil(0.005, 4)
+		;ktempfreq =5 + jspline(4,0.1,10)
+		;atime = 0.01 + poscil(0.005, ktempfreq)
 
 		adel1 deltapi  iloopTime*atime
 		adel2 deltapi  iloopTime*2*atime
@@ -299,7 +314,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 0 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
  <bsbObject version="2" type="BSBDisplay">
   <objectName>active</objectName>
@@ -347,7 +362,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 1 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
  <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
@@ -366,7 +381,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 2 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>sound1</objectName>
@@ -395,7 +410,7 @@ endin
   <minimum>0</minimum>
   <maximum>2</maximum>
   <randomizable group="0">false</randomizable>
-  <value>0</value>
+  <value>1</value>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>
