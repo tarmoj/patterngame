@@ -21,7 +21,7 @@ ApplicationWindow {
             onNamesChanged: {
                 console.log(voice, names);
                 patternRects.itemAt(voice).namesInQue = names;
-                console.log(patternRects.itemAt(voice).namesInQue);
+                //console.log(patternRects.itemAt(voice).namesInQue);
             }
           }
 
@@ -45,6 +45,7 @@ ApplicationWindow {
             voice = messageParts[1];
             patternRects.itemAt(voice).clearSquares();
             patternRects.itemAt(voice).name = "Nobody";
+            patternRects.itemAt(voice).namesInQue = "";
         }
     }
 

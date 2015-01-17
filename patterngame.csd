@@ -140,7 +140,7 @@ instr playPattern ; takes care thta incoming messages start "on tick"
 	endif
 endin
 
-;schedule "playPattern",0,0,1, 4, 2
+;schedule "playPattern_i",0,0,1, 4, 2
 instr playPattern_i
 	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition
 	irepeatAfter = p5 ; repeat after given squareDurations
@@ -162,6 +162,7 @@ loophere:
 		
 endin
 
+giSine ftgen 0,0,16384,10,1,0.05,0.04,0.003,0.002,0.001
 ; schedule "sound", 0,  0.25, 0.1, 440
 instr sound
 	iamp = p4
@@ -173,25 +174,36 @@ instr sound
 	; TODO: proovi adsr
 	isound = i(gkSoundType[ivoice]) ;chnget "sound"
 	if (isound==0) then 
-		asig poscil 1,ifreq	 
-	elseif (isound==1) then	
+		asig poscil 1,ifreq,giSine	 
+	elseif (isound==1) then 
+		asig fmbell	1, ifreq,1,0.5,0.001,2
+	
+	elseif (isound==2) then	
 		asig vco2 1, ifreq
 		asig moogladder asig, line(ifreq*6,p3,ifreq*2), 0.8
 	else
 		asig pinker
-		asig moogvcf asig, line(ifreq*6,p3,ifreq*2), 0.9	
+		asig moogvcf asig, line(ifreq*6,p3,ifreq*3), 0.9	
 	endif
 	
 	gaSignal[ivoice] = gaSignal[ivoice] + asig*iamp *aenv
 endin
 
+;schedule "startDeviation",0,30
+instr startDeviation 
+	idur = p3
+	schedule "deviationLine",0,idur,random:i(0.1,0.9), random:i(0.25,0.75), 0 
+	schedule "deviationLine",2,idur,random:i(0.1,0.9), random:i(0.25,0.75), 0 
+	schedule "deviationLine",4,idur,random:i(0.1,0.9), random:i(0.25,0.75), 0 
+endin
+
 ; schedule "deviationLine",0,30,0.5, 0.25, 2
 instr deviationLine ; calculates a factor that will be applied to deltapi line in loopPlay value always from 1 to some lesser value. The line stays at 1 for p5*p3 seconds
 	iendValue = (p4==0) ? 0.0001 : p4 ; protext exp from 0
-	istayAt1 = p5
+	ipeakTime = p3*p5
 	ivoice = p6
 	kdeviation init 1
-	kdeviation linseg 1,p3/2, iendValue, p3/2, 1
+	kdeviation linseg 1,ipeakTime, iendValue, p3-ipeakTime, 1
 	gkDeviation[ivoice] = kdeviation
 	;gkDeviation[ivoice] interp kdeviation
 ;	if (release()==1) then
@@ -270,7 +282,7 @@ endin
   <g>255</g>
   <b>255</b>
  </bgcolor>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>17</x>
   <y>72</y>
@@ -289,7 +301,7 @@ endin
   <latch>false</latch>
   <latched>true</latched>
  </bsbObject>
- <bsbObject type="BSBDisplay" version="2">
+ <bsbObject version="2" type="BSBDisplay">
   <objectName>active</objectName>
   <x>78</x>
   <y>194</y>
@@ -318,7 +330,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>107</y>
@@ -337,7 +349,7 @@ endin
   <latch>false</latch>
   <latched>true</latched>
  </bsbObject>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>143</y>
@@ -356,7 +368,7 @@ endin
   <latch>false</latch>
   <latched>true</latched>
  </bsbObject>
- <bsbObject type="BSBSpinBox" version="2">
+ <bsbObject version="2" type="BSBSpinBox">
   <objectName>sound1</objectName>
   <x>39</x>
   <y>292</y>

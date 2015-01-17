@@ -45,16 +45,31 @@ void WsServer::onNewConnection()
     emit newConnection(m_clients.count());
 }
 
+int randInt(int low, int high) {
+	return qrand() % ((high + 1) - low) + low;
+}
+
 void WsServer::processTextMessage(QString message)
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
     if (!pClient) {
         return;
     }
-	//qDebug()<<message;
+	qDebug()<<message;
 
 	QStringList messageParts = message.split(",");
-	// message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2
+
+	if (message.startsWith("random")) { // create random pattern, add to que format: random,<voice>
+		int voice = messageParts[1].toInt();
+		QString pattern;
+		pattern.sprintf("pattern,tester%d,%d,%d,%d,steps:,%d,%d,%d,%d,%d,%d",randInt(1,100),voice, randInt(0,5),randInt(2,10), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5) );
+		qDebug()<<"Generated random pattern for voice "<<voice<<": "<<pattern;
+		message=pattern; // replace message for further processing
+		messageParts = message.split(",");
+	}
+
+
+	// pattern-message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2
 	if (message.startsWith("pattern")) {
 		//emit newMessage(message);
 		int voice = messageParts[2].toInt();
@@ -67,30 +82,32 @@ void WsServer::processTextMessage(QString message)
 		if (freeToPlay[voice]) {
 			sendFirstMessage(voice);
 		}
-	}
 
+	} else 	if (message.startsWith("new")) { // for testing only. send message from js console of browser wit doSend("new 1") or similar
+		int voice = messageParts[1].toInt();
+		freeToPlay[voice]=1;
+		sendFirstMessage(voice);
 
-
-
-	if (message.startsWith("new"))  // for testing only. send message from js console of browser wit doSend("new 1") or similar
-		sendFirstMessage(messageParts[1].toInt());
-
-
+	} else if (message.startsWith("property")) {
 	// send control messages either for brain-headset or csound cahnnels as f.e. "property,attention,0.25", "property,level,0.5"
-	if (message.startsWith("property")) {
-		emit newPropertyValue(messageParts[1], messageParts[2].toDouble());
-	}
 
-	if (message.startsWith("square")) { // command to change square duration: squareDuration voice duration. Send to csound as code for compileOrc
+		emit newPropertyValue(messageParts[1], messageParts[2].toDouble());
+
+	} else if (message.startsWith("square")) { // command to change square duration: squareDuration voice duration. Send to csound as code for compileOrc
 		QString code = "gkSquareDuration["+messageParts[1]+"] init "+ messageParts[2];
 		qDebug()<<"Code to compile: "<<code;
 		emit newCodeToComplie(code);
+
+	} else if (message.startsWith("schedule") || message.contains("init")) { //right now only schedule or init commands are accepted
+		emit newCodeToComplie(message);
+
+	} else if (message.startsWith("clear") || message.contains("init")) { //right now only schedule or init commands are accepted
+		int voice = messageParts[1].toInt();
+		patternQue[voice].clear();
+		names[voice].clear();
+		sendFirstMessage(voice); // to emit siganl to qml to clear
 	}
 
-	//TODO: NB! comma does not suit as separtor!!! use ;
-	if (message.startsWith("schedule") || message.contains("init")) { //right now only schedule or init commands are accepted
-		emit newCodeToComplie(message);
-	}
 
 
 }
@@ -140,11 +157,13 @@ void WsServer::sendFirstMessage(int voice)
 		emit newMessage("clear,"+QString::number(voice));
 		return;
 	}
+
 	QString firstMessage = patternQue[voice].takeFirst();
 	qDebug()<<"Messages in list per voice: "<<voice<<": "<<patternQue[voice].count();
 	freeToPlay[voice]=0;
 	emit newMessage(firstMessage);
-	names[voice].removeFirst();
+	if (!names[voice].isEmpty())
+		names[voice].removeFirst();
 	emit namesChanged(voice, names[voice].join("\n"));
 
 }

@@ -4,8 +4,8 @@ import QtQuick.Controls 1.2
 
 Rectangle {
     id: rectangle1
-    width: 410
-    height: 400
+    width: 500
+    height: 380
     gradient: Gradient {
         GradientStop {
             position: 0
@@ -27,11 +27,13 @@ Rectangle {
         }
         onStatusChanged: if (socket.status == WebSocket.Error) {
                              console.log("Error: " + socket.errorString)
+                             socket.active = false;
                          } else if (socket.status == WebSocket.Open) {
                              console.log("Socket open")
                              //socket.sendTextMessage("Hello World")
                          } else if (socket.status == WebSocket.Closed) {
                              console.log("Socket closed")
+                             socket.active = false;
                              //messageBox.text += "\nSocket closed"
                          }
         active: false
@@ -88,8 +90,8 @@ Rectangle {
 
             TextField {
                 id: command
-                width: 200
-                text: "property,level,0.5"
+                width: 240
+                text: "schedule \"startDeviation\", 0,30"
             }
 
             Button {
@@ -114,18 +116,131 @@ Rectangle {
 
             Slider {
                 id: volumesSlider
-                value: 0
+                value: 0.6
                 onValueChanged: socket.sendTextMessage("property,level,"+this.value);
             }
 
 
         }
 
-//        TextArea {
-//            id: messageBox
-//            height:  80
-//            //y:60
-//            text: socket.status == WebSocket.Open ? qsTr("Sending...") : qsTr("Welcome!")
+        Row {
+            spacing: 5
+
+            Label {
+                text: qsTr("Scale:")
+            }
+
+            ComboBox {
+                id: scaleBox
+                model: ["Slendro","Pelog","Bohlen-Pierce"]
+                onCurrentIndexChanged: {
+                    console.log("New index: ", currentIndex);
+                    socket.sendTextMessage("schedule \"setMode\", 0,0,"+currentIndex);
+                }
+
+            }
+
+
+        }
+
+        Row {
+            id: voicesRow
+            spacing: 10
+
+            //TODO: place repeater x3
+            Repeater {
+                id: voicesRepeater
+                model: 3
+                onItemAdded: {
+                  this.itemAt(index).voice = index //the index defines which rectangle you change
+                }
+
+
+                Rectangle {
+                    width: 150
+                    height: 220
+                    //"#f1c112"
+                    border.color: "black"
+                    radius: 10
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: "#9ef11b"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: "#355208"
+                        }
+                    }
+                    border.width: 2
+                    property int voice: parent.index
+
+                    Column {
+                        id: voiceColumn
+                        anchors.rightMargin: 5
+                        anchors.leftMargin: 5
+                        anchors.bottomMargin: 5
+                        anchors.topMargin: 5
+                        anchors.fill: parent
+                        spacing: 5
+
+
+                        Label {
+                            id: voiceLabel
+                            text: qsTr("Voice: ")+voice
+                        }
+
+                        Button {
+                            text: qsTr("Random pattern")
+                            onClicked: socket.sendTextMessage("random,"+voice)
+                        }
+
+                        Button {
+                            text: qsTr("Csound pattern")
+                            onClicked: socket.sendTextMessage("schedule \"playPattern_i\",0,0,0,0,"+voice);
+                        }
+
+                        Button {
+                            text: qsTr("Release first in que")
+                            onClicked: socket.sendTextMessage("new,"+voice)
+                        }
+
+                        Button {
+                            text: qsTr("Empty que")
+                            onClicked: socket.sendTextMessage("clear,"+voice);
+                        }
+
+                        ComboBox {
+                            id: soundCombo
+                            model: ["sine","fmbell","moogladder","reson-noise"]
+                            onCurrentIndexChanged: socket.sendTextMessage("property,sound"+(voice+1)+","+currentIndex);
+                        }
+
+                        Label {text:qsTr("Square duration") }
+
+                        SpinBox {
+                            id: squareDuration
+                            stepSize: 0.05
+                            maximumValue: 4
+                            decimals: 2
+                            value: 0.25
+                            onEditingFinished: socket.sendTextMessage("square,"+voice+","+value)
+                        }
+
+                    }
+
+
+                }
+            }
+        }
+
+
+        //        TextArea {
+        //            id: messageBox
+        //            height:  80
+        //            //y:60
+        //            text: socket.status == WebSocket.Open ? qsTr("Sending...") : qsTr("Welcome!")
         //            textColor: "#000000"
         //        }
 
