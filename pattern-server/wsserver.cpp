@@ -94,9 +94,14 @@ void WsServer::processTextMessage(QString message)
 		emit newPropertyValue(messageParts[1], messageParts[2].toDouble());
 
 	} else if (message.startsWith("square")) { // command to change square duration: squareDuration voice duration. Send to csound as code for compileOrc
-		QString code = "gkSquareDuration["+messageParts[1]+"] init "+ messageParts[2];
-		qDebug()<<"Code to compile: "<<code;
+		int voice = messageParts[1].toInt();
+		float duration = messageParts[2].toFloat();
+		QString code;
+		code.sprintf("schedule \"setSquare\",0,10, %d, %f", voice, duration);
+				// old:"gkSquareDuration["+messageParts[1]+"] init "+ messageParts[2];
+		qDebug()<<"Voice "<<voice<<" New square duration: "<<duration;
 		emit newCodeToComplie(code);
+		//TODO: squareDuration to PatternRect
 
 	} else if (message.startsWith("schedule") || message.contains("init")) { //right now only schedule or init commands are accepted
 		emit newCodeToComplie(message);

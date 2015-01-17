@@ -69,8 +69,8 @@ seed 0
 ;gkSquareDuration[1] init 1
 ;gkSquareDuration[2] init 4
 
-;schedule "setMode",1,0,1
-;schedule "setMode",2,0,2
+;schedule "setMode",0,0,1
+;schedule "setMode",0,0,2
 instr setMode ; sets the scale and load right ratios to giSteps
 	imode = p4
 	gkScale init imode
@@ -91,7 +91,7 @@ instr setMode ; sets the scale and load right ratios to giSteps
 endin
 
 
-schedule "randomPattern", 0, 0, 0, 1
+;schedule "randomPattern", 0, 0, 0, 1
 ;schedule "randomPattern", 1, 0, 1, 1
 ;schedule "randomPattern", 2.1, 0, 2, 1 ; last 1 if to repeat
 instr randomPattern
@@ -136,6 +136,18 @@ instr clockAndChannels
 	
 endin
 
+; schedule "setSquare",0,10,0,1.11
+instr setSquare ; sets the square duration change only on tick, to keep some rythimc pattern
+	ivoice = p4
+	isquareDuration = p5
+	if (gkClock[ivoice]==1) then
+		if (isquareDuration!=0) then
+			gkSquareDuration[ivoice] = isquareDuration ; to protect agains div by zero in clockAndChannels
+		endif
+		turnoff
+	endif
+endin
+
 
 ;schedule "playPattern",0.21,0,0, 4, 0
 ;schedule "playPattern",0,0,1, 4, 2
@@ -174,7 +186,7 @@ loophere:
 		
 endin
 
-giSine ftgen 0,0,16384,10,1,0.05,0.04,0.003,0.002,0.001
+;giSine ftgen 0,0,16384,10,1,0.05,0.04,0.003,0.002,0.001
 ; schedule "sound", 0,  0.25, 0.1, 440
 instr sound
 	iamp = p4
@@ -186,16 +198,17 @@ instr sound
 	; TODO: proovi adsr
 	isound = i(gkSoundType[ivoice]) ;chnget "sound"
 	if (isound==0) then 
-		asig poscil 1,ifreq,giSine	 
+		asig poscil 1,ifreq ;,giSine
+		asig chebyshevpoly asig, 0, 1, rnd(0.2), rnd(0.1),rnd(0.1), rnd(0.1), rnd(0.05), rnd(0.03) ; add some random timbre
 	elseif (isound==1) then 
-		asig fmbell	1, ifreq,1,0.5,0.001,2
+		asig fmbell	1, ifreq,random:i(0.8,2), random:i(0.5,1.1),0.005,4
 	
 	elseif (isound==2) then	
 		asig vco2 1, ifreq
-		asig moogladder asig, line(ifreq*6,p3,ifreq*2), 0.8
+		asig moogladder asig, line(ifreq*(1+rnd(6)),p3,ifreq*(2+rnd(2))), 0.8
 	else
 		asig pinker
-		asig moogvcf asig, line(ifreq*6,p3,ifreq*3), 0.9	
+		asig moogvcf asig, line(ifreq*(1+rnd(6)),p3,ifreq*(2+rnd(2))), random:i(0.5,0.9)
 	endif
 	
 	gaSignal[ivoice] = gaSignal[ivoice] + asig*iamp *aenv
@@ -297,7 +310,7 @@ endin
   <g>255</g>
   <b>255</b>
  </bgcolor>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>17</x>
   <y>72</y>
@@ -316,7 +329,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBDisplay">
+ <bsbObject type="BSBDisplay" version="2">
   <objectName>active</objectName>
   <x>78</x>
   <y>194</y>
@@ -345,7 +358,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>107</y>
@@ -364,7 +377,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>143</y>
@@ -383,7 +396,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>sound1</objectName>
   <x>39</x>
   <y>292</y>
@@ -408,9 +421,9 @@ endin
   </bgcolor>
   <resolution>1.00000000</resolution>
   <minimum>0</minimum>
-  <maximum>2</maximum>
+  <maximum>3</maximum>
   <randomizable group="0">false</randomizable>
-  <value>1</value>
+  <value>0</value>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>
