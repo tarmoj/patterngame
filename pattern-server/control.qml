@@ -91,7 +91,7 @@ Rectangle {
             TextField {
                 id: command
                 width: 240
-                text: "schedule \"startDeviation\", 0,30"
+                text: "schedule \"deviationLine\",0,20, 1, 1"
             }
 
             Button {

@@ -102,8 +102,7 @@ instr randomPattern
 	
 loophere:
 	giMatrix[ivoice][index] = limit(int(random:i(-gimaxPitches/2,gimaxPitches)), -1, gimaxPitches)
-	
-	print index, giMatrix[ivoice][index]
+	;print index, giMatrix[ivoice][index]
 	loop_lt index, 1, giPatternLength, loophere
 	
 	schedule "playPattern",0,0,  int(random:i(0,4)), int(random:i(2,8)), ivoice
@@ -186,6 +185,31 @@ loophere:
 		
 endin
 
+; schedule "deviationLine",0,20, 1, 1
+gkDelayFadeIn init 0
+instr deviationLine ; TODO: klõpsud sees!
+	ichange4sound = p4 ; change gkDelayFadein
+	ichange4loopPlay = p5 ; change the looptime
+	
+	if (ichange4sound > 0) then
+		gkDelayFadeIn linseg 0, p3/4,1,p3/2,1, p3/4,0
+	endif
+	
+	if (ichange4loopPlay > 0) then
+		
+		
+		gkDeviation[0] = 1+ poscil(0.1,1/10)
+		gkDeviation[1] = 1+ poscil(0.1,1/20)
+		gkDeviation[2] = 1+ poscil(0.1,1/30)
+		
+		if (release()==1) then
+			gkDeviation[0] = 1
+			gkDeviation[1] = 1
+			gkDeviation[2] = 1
+		endif
+	endif
+endin
+
 ;giSine ftgen 0,0,16384,10,1,0.05,0.04,0.003,0.002,0.001
 ; schedule "sound", 0,  0.25, 0.1, 440
 instr sound
@@ -211,32 +235,21 @@ instr sound
 		asig moogvcf asig, line(ifreq*(1+rnd(6)),p3,ifreq*(2+rnd(2))), random:i(0.5,0.9)
 	endif
 	
-	gaSignal[ivoice] = gaSignal[ivoice] + asig*iamp *aenv
+	asig = asig*iamp*aenv
+	; test small delay here
+	ktempfreq = 1;4.1 + jspline(4,0.1,10)
+	kamp poscil 0.004,1/10
+	;atime = 0.01 + poscil:a(0.005+kamp, ktempfreq)
+	atime = 0.05 + jspline:a(0.04, 0.1, 1)
+	adummy delayr p3+0.1
+	adel1 deltapi  atime
+	adel2 deltapi  atime*2;0.02 + poscil:a(0.003+kamp/2, ktempfreq)
+	adelay = (adel1+adel2)*aenv*gkDelayFadeIn
+	delayw asig + 0.3*adelay
+	
+	gaSignal[ivoice] = gaSignal[ivoice] + adelay+asig
 endin
 
-;schedule "startDeviation",0,30
-instr startDeviation 
-	idur = p3
-	schedule "deviationLine",0,idur,random:i(0.1,0.9), random:i(0.25,0.75), 0 
-	schedule "deviationLine",2,idur,random:i(0.1,0.9), random:i(0.25,0.75), 0 
-	schedule "deviationLine",4,idur,random:i(0.1,0.9), random:i(0.25,0.75), 0 
-endin
-
-; schedule "deviationLine",0,30,0.75, 0.5, 1
-instr deviationLine ; calculates a factor that will be applied to deltapi line in loopPlay value always from 1 to some lesser value. The line stays at 1 for p5*p3 seconds
-	iendValue = (p4==0) ? 0.0001 : p4 ; protext exp from 0
-	ipeakTime = p3*p5
-	ivoice = p6
-	kdeviation init 1
-	;kdeviation poscil 0.
-	kdeviation linseg 1,ipeakTime, iendValue, p3-ipeakTime, 1
-	gkDeviation[ivoice] = kdeviation
-	;gkDeviation[ivoice] interp kdeviation
-;	if (release()==1) then
-;		gkDeviation = 1
-;	endif
-endin
-gkDeviation[1] init 0.05
 
 instr loopPlay
 	iamp[] init  $MAXREPETITIONS
@@ -252,16 +265,17 @@ mark1:
 	ivoice = p6
 	
 	gkIsPlaying[ivoice] init 1
+	;gkIsPlaying[ivoice] = gkIsPlaying[ivoice] + 1 ; to allow more than 1 instruments to play
 	
 	iloopTime = irepeatAfter * i(gkSquareDuration[ivoice])
-	ilastLoop = itimes * irepeatAfter * i(gkSquareDuration[ivoice])
-	print itimes, irepeatAfter ;, ilastLoop
+	;ilastLoop = itimes * irepeatAfter * i(gkSquareDuration[ivoice])
+	print itimes, irepeatAfter, iloopTime;, ilastLoop
 		
 	if (itimes>0) then 
 		adummy delayr iloopTime*6
 		atime interp gkDeviation[ivoice]
-		;ktempfreq =5 + jspline(4,0.1,10)
-		;atime = 0.01 + poscil(0.005, ktempfreq)
+;		ktempfreq =5 + jspline(4,0.1,10)
+;		atime = 0.005 + poscil(0.001, ktempfreq)
 
 		adel1 deltapi  iloopTime*atime
 		adel2 deltapi  iloopTime*2*atime
@@ -276,7 +290,7 @@ mark1:
 		adelayed = 0	
 	endif
 	
-	adeclick linen 1,0.1,p3,0.5 ;1,0.1,0.5, 0.001
+	adeclick linen 1,0.05,p3,0.5 ;1,0.1,0.5, 0.001
 	aout = gaSignal[ivoice] + adelayed
 	aout clip aout, 0, 0dbfs ; for any case
 	aout = aout*port(gkLevel,0.02)*adeclick ;*(0.1+gkattention*0.9)
@@ -285,7 +299,7 @@ mark1:
 	outs aL, aR
 	gaSignal[ivoice] = 0
 	if (release()==1) then
-		gkIsPlaying[ivoice] = 0
+		gkIsPlaying[ivoice] = 0;gkIsPlaying[ivoice] - 1 ; to allow more than 1 to play
 	endif
 endin
 
@@ -330,7 +344,7 @@ endin
   <latched>false</latched>
  </bsbObject>
  <bsbObject type="BSBDisplay" version="2">
-  <objectName>active</objectName>
+  <objectName>display</objectName>
   <x>78</x>
   <y>194</y>
   <width>80</width>
@@ -423,7 +437,26 @@ endin
   <minimum>0</minimum>
   <maximum>3</maximum>
   <randomizable group="0">false</randomizable>
-  <value>0</value>
+  <value>2</value>
+ </bsbObject>
+ <bsbObject type="BSBButton" version="2">
+  <objectName>button5</objectName>
+  <x>45</x>
+  <y>251</y>
+  <width>100</width>
+  <height>30</height>
+  <uuid>{81a0ce30-293f-454a-9fd7-b3e8c080e944}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <type>event</type>
+  <pressedValue>1.00000000</pressedValue>
+  <stringvalue/>
+  <text>Deviation</text>
+  <image>/</image>
+  <eventLine>i "deviationLine"  0 20 1 0</eventLine>
+  <latch>false</latch>
+  <latched>true</latched>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>
