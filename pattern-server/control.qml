@@ -23,7 +23,7 @@ Rectangle {
         id: socket
         url: "ws://localhost:10010/ws"
         onTextMessageReceived: {
-            messageBox.text = messageBox.text + "\nReceived message: " + message
+           console.log("Received message: ",message);
         }
         onStatusChanged: if (socket.status == WebSocket.Error) {
                              console.log("Error: " + socket.errorString)
@@ -198,7 +198,7 @@ Rectangle {
 
                         Button {
                             text: qsTr("Csound pattern")
-                            onClicked: socket.sendTextMessage("schedule \"playPattern_i\",0,0,0,0,"+voice);
+                            onClicked: socket.sendTextMessage("schedule nstrnum(\"playPattern_i\")+rnd(1),0,0,4,4,"+voice); // use fractional number not to interrupt the previous one
                         }
 
                         Button {
@@ -222,6 +222,7 @@ Rectangle {
                         SpinBox {
                             id: squareDuration
                             stepSize: 0.05
+                            minimumValue: 0.1
                             maximumValue: 4
                             decimals: 2
                             value: 0.25

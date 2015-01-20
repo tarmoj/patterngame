@@ -8,6 +8,8 @@ ApplicationWindow {
     height: 580
     title: qsTr("Patterngame server")
     property int clientsCount: 0
+    property string mode: "Slendro"
+
 
     Connections {
             target: wsServer
@@ -33,19 +35,25 @@ ApplicationWindow {
         console.log("Message came in: ",messageString);
         var messageParts = messageString.split(",");
         var voice;
-        if (messageParts[0]=="pattern") {
+        if (messageParts[0]==="pattern") {
             voice = messageParts[2];
             var name = messageParts[1];
             //console.log("Name: ", name)
             patternRects.itemAt(voice).name = name;
             var steps = messageParts.slice(messageParts.indexOf("steps:")+1);
             patternRects.itemAt(voice).setSquares(steps);
+            var speaker = messageParts[5];
+            patternRects.itemAt(voice).speaker = parseInt(speaker);
 
-        } else if (messageParts[0]=="clear") {  // then voice must be 2nd argument
+        } else if (messageParts[0]==="clear") {  // then voice must be 2nd argument
             voice = messageParts[1];
             patternRects.itemAt(voice).clearSquares();
             patternRects.itemAt(voice).name = "Nobody";
             patternRects.itemAt(voice).namesInQue = "";
+            patternRects.itemAt(voice).speaker = 0;
+        } else if (messageParts[0]==="mode") {
+            mode = messageParts[1];
+            console.log("New mode: ",mode);
         }
     }
 
@@ -75,11 +83,26 @@ ApplicationWindow {
         anchors.fill: parent
         Column {
             anchors.fill:parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            anchors.topMargin: 8
+            anchors.bottomMargin: 8
+
             spacing: 8
             Label {
                 id:clientsCountLabel
                 color: "#ffff00"
                 text: qsTr("Clients: " + clientsCount)
+            }
+
+//            Label {
+//                color: "#ffff00"
+//                text: qsTr("Test: " + active)
+//            }
+
+            Label {
+                color: "#ffff00"
+                text: qsTr("Scale: ")+mode
             }
 
             Row {

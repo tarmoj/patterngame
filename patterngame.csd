@@ -105,7 +105,7 @@ loophere:
 	;print index, giMatrix[ivoice][index]
 	loop_lt index, 1, giPatternLength, loophere
 	
-	schedule "playPattern",0,0,  int(random:i(0,4)), int(random:i(2,8)), ivoice
+	schedule "playPattern",0,0,  int(random:i(0,4)), int(random:i(2,8)), ivoice, int(random:i(1,9))
 	if (iloop>0) then
 		schedule	"randomPattern", (giPatternLength+1)*i(gkSquareDuration[ivoice]), 0, ivoice, iloop
 	endif
@@ -118,6 +118,8 @@ instr clockAndChannels
 	chnset gkIsPlaying[0], "active1"
 	chnset gkIsPlaying[1], "active2"
 	chnset gkIsPlaying[2], "active3"
+		outvalue "display", gkIsPlaying[0]
+
 
 	;outvalue 	"active",gkIsPlaying[0]
 	
@@ -150,35 +152,39 @@ endin
 
 ;schedule "playPattern",0.21,0,0, 4, 0
 ;schedule "playPattern",0,0,1, 4, 2
-instr playPattern ; takes care thta incoming messages start "on tick"
+instr playPattern ; takes care that incoming messages start "on tick"
 	idur = p3
 	p3 = 10 ; for any case
 	ivoice = p6
 	if (gkClock[ivoice]==1 && gkIsPlaying[ivoice]==0 ) then 
-		event "i", "playPattern_i", 0, idur,p4,p5,p6
-		printk2 gkClock[ivoice] 
+		event "i", "playPattern_i", 0, idur,p4,p5,p6,p7
 		turnoff	
 	endif
 endin
 
-;schedule "playPattern_i",0,0,1, 4, 2
+;schedule 6.1,0,0,1, 4, 0,4
 instr playPattern_i
-	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition
+	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition,	
+	iloopPlay = nstrnum("loopPlay")+frac(p1) ; if called with fractional number, call loopPlay with it, then the gkIsPlaying flag is not set - useful for creating thicker textures
+	print iloopPlay
+	
+
 	irepeatAfter = p5 ; repeat after given squareDurations
 	ivoice = p6 ; three voices
+	ipanOrSpeaker = p7 ; number of speaker if 8 channels, otherwise expresse pan 1-left, 8- right
 	itotalTime = giPatternLength*i(gkSquareDuration[ivoice]) + itimes*irepeatAfter*i(gkSquareDuration[ivoice])
 	print ivoice, itotalTime
 	index = 0
-
-	schedule "loopPlay", 0, itotalTime,  itimes, irepeatAfter, ivoice  
+	
+	schedule iloopPlay, 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker 
 	; play sounds
 loophere:
 	istep = giMatrix[ivoice][index]
-	print istep 
+	;print istep 
 	if (istep != -1) then
 			ifreqRatio = tab_i(istep,giScales[i(gkScale)]) 
 		ifreq =	(1<<ivoice)*giBaseFrequency*ifreqRatio  
-		print istep,ifreq
+		;print istep,ifreq
 		schedule	"sound", index*i(gkSquareDuration[ivoice]), i(gkSquareDuration[ivoice]), 0.2,ifreq , ivoice 
 	endif
 	loop_lt index, 1, giPatternLength, loophere
@@ -263,8 +269,12 @@ mark1:
 	
 	irepeatAfter = p5 ; repeat after given squareDurations
 	ivoice = p6
+	ipanOrSpeaker = p7
 	
-	gkIsPlaying[ivoice] init 1
+	print p1
+	if (frac(p1)==0) then
+		gkIsPlaying[ivoice] init 1 ; mark only when called without fractional part
+	endif
 	;gkIsPlaying[ivoice] = gkIsPlaying[ivoice] + 1 ; to allow more than 1 instruments to play
 	
 	iloopTime = irepeatAfter * i(gkSquareDuration[ivoice])
@@ -295,10 +305,19 @@ mark1:
 	aout clip aout, 0, 0dbfs ; for any case
 	aout = aout*port(gkLevel,0.02)*adeclick ;*(0.1+gkattention*0.9)
 	
-	aL, aR pan2 aout, giPan[ivoice] ; now: hard left, center, hard right
-	outs aL, aR
+	
+	
+	
+	if (nchnls == 8) then
+		outch ipanOrSpeaker, aout
+	else ; for stereo
+		ipan = (ipanOrSpeaker-1) / 7 ; 1..8 -> 0..1
+		aL, aR pan2 aout, ipan
+		outs aL, aR		
+	endif 	 
+	
 	gaSignal[ivoice] = 0
-	if (release()==1) then
+	if (release()==1 && frac(p1)==0) then
 		gkIsPlaying[ivoice] = 0;gkIsPlaying[ivoice] - 1 ; to allow more than 1 to play
 	endif
 endin
@@ -389,7 +408,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 1 0</eventLine>
   <latch>false</latch>
-  <latched>false</latched>
+  <latched>true</latched>
  </bsbObject>
  <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
@@ -408,7 +427,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 2 0</eventLine>
   <latch>false</latch>
-  <latched>false</latched>
+  <latched>true</latched>
  </bsbObject>
  <bsbObject type="BSBSpinBox" version="2">
   <objectName>sound1</objectName>
@@ -456,7 +475,7 @@ endin
   <image>/</image>
   <eventLine>i "deviationLine"  0 20 1 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>

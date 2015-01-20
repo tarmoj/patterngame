@@ -39,7 +39,7 @@ void CsEngine::run()
 	active <<  0 << 0 <<0;
 
 	while (!mStop  && perfThread.GetStatus() == 0 ) {
-		usleep(10000);  // ? et ei teeks tööd kogu aeg
+		usleep(500);  // ? et ei teeks tööd kogu aeg
 		for (int i=0;i<3;i++) {
 			active[i] = getChannel("active"+QString::number(i+1));
 			if (active[i]!=oldActive[i] && active[i]==0) { // instruments has ended
@@ -85,20 +85,21 @@ void CsEngine::handleMessage(QString message)
 	qDebug()<<"Message in csound: "<<message;
 	//vaja midagi nagu: 1) compileOrc( giMatrix[voice][0] = step1 etc fillarray )  2) ;schedule "playPattern",0,0,nTimes, afterNsquares
 
-	if (message.startsWith("clear")) {
+	if (message.startsWith("clear") || message.startsWith("mode")) {
 		return;
 	}
 	QStringList messageParts = message.split(",");
 	QString voice = messageParts[2];
 	QString repeatNtimes = messageParts[3];
 	QString afterNSquares = messageParts[4];
+	QString panOrSpeaker = messageParts[5];
 	// prepare steps for compileOrc:
 	QString code = "";
 	for (int j=0, i=messageParts.indexOf("steps:")+1 ; i<messageParts.length(); i++, j++ ) { // statements to store steps into 2d array giMartix[voice][step]
 		code += "giMatrix["+voice+"]["+QString::number(j) + "] = " + messageParts[i] +  "\n";
 	}
 
-	code += "\nschedule \"playPattern\",0,0," + repeatNtimes + "," + afterNSquares + "," + voice;
+	code += "\nschedule \"playPattern\",0,0," + repeatNtimes + "," + afterNSquares + "," + voice + "," + panOrSpeaker;
 	qDebug()<<"Message to compile: "<<code;
 	compileOrc(code);
 

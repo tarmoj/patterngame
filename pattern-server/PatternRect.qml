@@ -14,6 +14,8 @@ Rectangle {
     property string namesInQue
     property color activeColor: "lightgreen"
     property color inActiveColor: "darkgreen"
+    property real squareDuration: 0
+    property int speaker: 0
     //TODO: active and inactive color as properties
 
 
@@ -76,29 +78,18 @@ Rectangle {
 
         }
 
-//        Row {
-//            id: row2
+        Text {
+            color: "white"
+            text: qsTr("Square duration: "+ squareDuration)
+            font.pixelSize: 12
+        }
 
-//            Text {
-//                id: text2
-//                color: "#ffffff"
-//                text: qsTr("Square duration: ")
-//                font.pixelSize: 12
-//            }
+        Text {
+            color: "white"
+            text: qsTr("Speaker: "+ speaker)
+            font.pixelSize: 12
+        }
 
-//            Text {
-//                id: sqauareDurationLabel
-//                color: "#ffffff"
-//                text: qsTr("0")
-//                font.pixelSize: 12
-//            }
-
-//        }
-
-//        Button {
-//            text: "Clear"
-//            onClicked: clearSquares();
-//        }
 
 
 

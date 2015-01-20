@@ -113,7 +113,7 @@
 		oscil.delay = parseInt(document.myform.delay.value);
 		
 		// UI values
-		document.getElementById("repeat_label").innerHTML = document.getElementById("repeatCount").value;
+		document.getElementById("repeat_label").innerHTML = parseInt(document.getElementById("repeatCount").value)+1;
 		document.getElementById("delay_label").innerHTML = document.getElementById("delay").value;
 		document.myform.mode.value="0";
 		setMode(0);
@@ -250,8 +250,13 @@
       };
       //imageObj.src = 'img.png';
 
+      
+      
+      
 	function setMode(mode) {
 		//var mode = parseInt(document.myform.mode.value);
+		document.myform.mode.value = mode;
+		document.myform.mode.disabled = true;
 		switch (mode) {
 			case 0:
 				MAX_NOTES = 6;
@@ -274,13 +279,26 @@
 		}
 	}
 	
+	function onMessage(evt)
+	{
+		// does server send any messages at all?
+		writeToScreen("Message from server: " + evt.data + '\n');
+ 		var mess_array = evt.data.split(",");
+ 		//console.log(mess_array[0]);
+ 		if (mess_array[0] == "mode") {	
+			setMode(parseInt(mess_array[1]));
+ 		}
+	}
+	
+	
 	function sendEvent() {
-		// message format: 'pattern' name voice repeatNtimes afterNsquares steps: pitch_index11 pitch_index2 etc
+		// message format: 'pattern' name voice repeatNtimes afterNsquares  speaker/pan steps: pitch_index11 pitch_index2 etc
 		var parameters = ['pattern'];
 		parameters.push(document.myform.name.value); // TODO: check if there is comma, either split in server may not work
 		parameters.push(getRadioValue("octave"));
 		parameters.push(document.myform.repeatCount.value);
 		parameters.push(document.myform.delay.value);
+		parameters.push(getRadioValue("speaker"));
 		parameters.push("steps:")
 		// add all pitchindexes (either step number of -1 if nunselected
 		for (var i=0;i<MAX_NOTES; i++) {
@@ -315,13 +333,23 @@
 	Tap or click on the green squares to build thes sound pattern.
 	<br>
     <div id="container"></div>
-    
-
-    Repeat <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=repeatCount.value"
-    onchange="oscil.repeatCount=parseInt(this.value)"> 
+    <br>
+     Send to speaker: 
+    <input checked="checked" value=1 name="speaker" type="radio">1 
+    <input value=2 name="speaker" type="radio">2
+    <input value=3 name="speaker" type="radio">3
+    <input value=4 name="speaker" type="radio">4
+    <input value=5 name="speaker" type="radio">5
+    <input value=6 name="speaker" type="radio">6
+    <input value=7 name="speaker" type="radio">7
+    <input value=8 name="speaker" type="radio">8
+    <br>
+	<br>
+    Play the melody <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=parseInt(repeatCount.value)+1"
+    onchange="oscil.repeatCount=parseInt(this.value+)"> 
     <output name="repeat_label" for="repeatCount" id="repeat_label">0</output>
     times<br><br>
-    After <input type="range" class="range" id="delay" min=2 max=10 step=1 value=8 onchange="oscil.delay=parseInt(this.value)" oninput="delay_label.value=delay.value"> 
+    Start repetition after <input type="range" class="range" id="delay" min=2 max=10 step=1 value=8 onchange="oscil.delay=parseInt(this.value)" oninput="delay_label.value=delay.value"> 
     <output name="delay_label" for="delay" id="delay_label">8</output> 
     units (square durations).
     <br><br><br>

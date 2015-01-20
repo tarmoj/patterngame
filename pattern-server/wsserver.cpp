@@ -22,6 +22,8 @@ WsServer::WsServer(quint16 port, QObject *parent) :
 	patternQue << QStringList() << QStringList()<<QStringList(); // define the list
 	names << QStringList() << QStringList()<<QStringList();
 	freeToPlay<<1<<1<<1;
+	modeNames<<"Slendro"<<"Pelog"<<"Bohlen-Pierce";
+	mode = 0;
 
 }
 
@@ -43,6 +45,7 @@ void WsServer::onNewConnection()
 
     m_clients << pSocket;
     emit newConnection(m_clients.count());
+	pSocket->sendTextMessage("mode,"+QString::number(mode)); // to set the active mode on connect
 }
 
 int randInt(int low, int high) {
@@ -62,7 +65,7 @@ void WsServer::processTextMessage(QString message)
 	if (message.startsWith("random")) { // create random pattern, add to que format: random,<voice>
 		int voice = messageParts[1].toInt();
 		QString pattern;
-		pattern.sprintf("pattern,tester%d,%d,%d,%d,steps:,%d,%d,%d,%d,%d,%d",randInt(1,100),voice, randInt(0,5),randInt(2,10), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5) );
+		pattern.sprintf("pattern,tester%d,%d,%d,%d,%d,steps:,%d,%d,%d,%d,%d,%d",randInt(1,100),voice, randInt(0,5),randInt(2,10), randInt(1,8), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5) );
 		qDebug()<<"Generated random pattern for voice "<<voice<<": "<<pattern;
 		message=pattern; // replace message for further processing
 		messageParts = message.split(",");
@@ -105,6 +108,13 @@ void WsServer::processTextMessage(QString message)
 
 	} else if (message.startsWith("schedule") || message.contains("init")) { //right now only schedule or init commands are accepted
 		emit newCodeToComplie(message);
+		if (message.contains("setMode"))  {
+				mode = messageParts[3].toInt();
+				emit newMessage("mode,"+modeNames[mode]); // bit cryptic code, should extract the scale and forward to qml
+				foreach (QWebSocket * client, m_clients) {
+					client->sendTextMessage("mode,"+messageParts[3]); // tell the clients about mode change
+				}
+		}
 
 	} else if (message.startsWith("clear") || message.contains("init")) { //right now only schedule or init commands are accepted
 		int voice = messageParts[1].toInt();
@@ -175,6 +185,7 @@ void WsServer::sendFirstMessage(int voice)
 
 void WsServer::setFreeToPlay(int voice)
 {
+	qDebug()<<"FREE TO PLAY "<<voice;
 	freeToPlay[voice]=1;
 	sendFirstMessage(voice);
 }

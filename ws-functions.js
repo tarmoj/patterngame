@@ -25,21 +25,7 @@
 		document.myform.sendButton.disabled = true;
 	}
 
-	function onMessage(evt)
-	{
-		// does server send any messages at all?
-		writeToScreen("Message from server: " + evt.data + '\n');
- 		var mess_array = evt.data.split(" ");
- 		//console.log(mess_array[0]);
- 		if (mess_array[0] == "pause") {	
-			listenButton.disabled = true;
-			document.getElementById("messageText").innerHTML = "Wait and listen!"
- 		}
- 		if (mess_array[0] == "continue") {	
-			listenButton.disabled = false;
-			document.getElementById("messageText").innerHTML = "";
- 		}
-	}
+	
 
 	function onError(evt)
 	{
