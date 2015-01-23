@@ -57,7 +57,9 @@ gkIsPlaying[] init 3 ; flags the show if the voice is playing
 ;CHANNELS:
 
 chnset 0.5, "level"
-
+chnset 0.25, "square1"
+chnset 0.25, "square2"
+chnset 0.25, "square3"
 
 seed 0
 
@@ -87,7 +89,7 @@ instr setMode ; sets the scale and load right ratios to giSteps
 		giPatternLength = 6
 		gimaxPitches = 6	
 	endif
-	print imode, giPatternLength, gimaxPitches
+	;print imode, giPatternLength, gimaxPitches
 endin
 
 
@@ -111,6 +113,7 @@ loophere:
 	endif
 endin
 
+
 alwayson "clockAndChannels"
 instr clockAndChannels 
 	
@@ -128,8 +131,13 @@ instr clockAndChannels
 	gkSoundType[0] chnget "sound1" 
 	gkSoundType[1] chnget "sound2"
 	gkSoundType[2] chnget "sound3"
-		
-
+	
+	if (metro(2)==1) then ; allow square duration changes only "on tick"	
+		gkSquareDuration[0] chnget "square1"
+		gkSquareDuration[1] chnget "square2"
+		gkSquareDuration[2] chnget "square3"
+	endif
+	
 	; to sync incoming messages:		
 	gkClock[0] metro 1/gkSquareDuration[0]
 	gkClock[1] metro 1/gkSquareDuration[1]
@@ -150,44 +158,74 @@ instr setSquare ; sets the square duration change only on tick, to keep some ryt
 endin
 
 
-;schedule "playPattern",0.21,0,0, 4, 0
-;schedule "playPattern",0,0,1, 4, 2
-instr playPattern ; takes care that incoming messages start "on tick"
+;schedule "playPattern",0.21,0,3, 4, 0
+;schedule "playPattern",0,0,1, 4, 1
+instr playPattern_previous ; takes care that incoming messages start "on tick"
 	idur = p3
 	p3 = 10 ; for any case
 	ivoice = p6
-	if (gkClock[ivoice]==1 && gkIsPlaying[ivoice]==0 ) then 
-		event "i", "playPattern_i", 0, idur,p4,p5,p6,p7
-		turnoff	
-	endif
+	; võibolla viga siin nendes tingimustes:
+	schedule "playPattern_i", 0, 0,p4,p5,p6,p7
+;	if (gkClock[ivoice]==1 && gkIsPlaying[ivoice]==0 ) then 
+;		event "i", "playPattern_i", 0, idur,p4,p5,p6,p7
+;		turnoff	
+;	endif
 endin
 
-;schedule 6.1,0,0,1, 4, 0,4
-instr playPattern_i
+;schedule 7.1,0,0,1, 4, 0,4
+instr playPattern ;_i
 	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition,	
 	iloopPlay = nstrnum("loopPlay")+frac(p1) ; if called with fractional number, call loopPlay with it, then the gkIsPlaying flag is not set - useful for creating thicker textures
-	print iloopPlay
-	
+	;print iloopPlay
 
 	irepeatAfter = p5 ; repeat after given squareDurations
 	ivoice = p6 ; three voices
 	ipanOrSpeaker = p7 ; number of speaker if 8 channels, otherwise expresse pan 1-left, 8- right
 	itotalTime = giPatternLength*i(gkSquareDuration[ivoice]) + itimes*irepeatAfter*i(gkSquareDuration[ivoice])
 	print ivoice, itotalTime
-	index = 0
+	; TODO: how to handle csound-played pattern only? ie, not sent by user?
 	
-	schedule iloopPlay, 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker 
-	; play sounds
-loophere:
-	istep = giMatrix[ivoice][index]
-	;print istep 
-	if (istep != -1) then
-			ifreqRatio = tab_i(istep,giScales[i(gkScale)]) 
-		ifreq =	(1<<ivoice)*giBaseFrequency*ifreqRatio  
-		;print istep,ifreq
-		schedule	"sound", index*i(gkSquareDuration[ivoice]), i(gkSquareDuration[ivoice]), 0.2,ifreq , ivoice 
+	;if (frac(p1)==0 && i(gkIsPlaying[ivoice])==1) then ; if loopPlay is already on and the instrument is called by user (ie without fractional part), don't start it and stop here.
+		;turnoff
+	;else 
+		;schedule iloopPlay, 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker ; set the loop player to be on for pattern+ repetitions;
+	;endif
+	
+	
+		; play sounds
+; play sounds on clock's ticks to bea able to change tempo
+	p3 = 40 ; for any case, maximal pattern duration 10*4 seconds
+	kcounter init 0
+	if (gkClock[ivoice]==1 && kcounter<giPatternLength ) then
+		if (kcounter==0) then ; start loopPlay on first note
+			schedkwhen gkClock[ivoice], 0, 0, "loopPlay", 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker
+		endif
+		kstep = giMatrix[ivoice][kcounter] 		
+		if (kstep >= 0) then
+			;printk2 kstep 
+			kfreqRatio = tab:k(kstep,giScales[i(gkScale)])
+			kfreq = (1<<ivoice)*giBaseFrequency*kfreqRatio; 
+			event "i","sound", 0, gkSquareDuration[ivoice], 0.2,kfreq, ivoice 
+		endif
+		kcounter += 1
+		;printk2 kcounter
+	endif		
+	if (kcounter==giPatternLength) then
+		turnoff
 	endif
-	loop_lt index, 1, giPatternLength, loophere
+	
+; i-time loop
+;	index = 0
+;loophere:
+;	istep = giMatrix[ivoice][index]
+;	;print istep 
+;	if (istep != -1) then
+;			ifreqRatio = tab_i(istep,giScales[i(gkScale)]) 
+;		ifreq =	(1<<ivoice)*giBaseFrequency*ifreqRatio  
+;		;print istep,ifreq
+;		schedule	"sound", index*i(gkSquareDuration[ivoice]), i(gkSquareDuration[ivoice]), 0.2,ifreq , ivoice 
+;	endif
+;	loop_lt index, 1, giPatternLength, loophere
 		
 endin
 
@@ -271,9 +309,9 @@ mark1:
 	ivoice = p6
 	ipanOrSpeaker = p7
 	
-	print p1
+	;print p1
 	if (frac(p1)==0) then
-		gkIsPlaying[ivoice] init 1 ; mark only when called without fractional part
+		gkIsPlaying[ivoice] = 1 ; mark only when called without fractional part
 	endif
 	;gkIsPlaying[ivoice] = gkIsPlaying[ivoice] + 1 ; to allow more than 1 instruments to play
 	
@@ -334,8 +372,8 @@ endin
  <objectName/>
  <x>0</x>
  <y>0</y>
- <width>158</width>
- <height>317</height>
+ <width>198</width>
+ <height>384</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="nobackground">
@@ -360,7 +398,7 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 0 0</eventLine>
   <latch>false</latch>
-  <latched>false</latched>
+  <latched>true</latched>
  </bsbObject>
  <bsbObject type="BSBDisplay" version="2">
   <objectName>display</objectName>
@@ -372,7 +410,7 @@ endin
   <visible>true</visible>
   <midichan>0</midichan>
   <midicc>0</midicc>
-  <label>0.000</label>
+  <label>1.000</label>
   <alignment>left</alignment>
   <font>Liberation Sans</font>
   <fontsize>10</fontsize>
@@ -431,8 +469,8 @@ endin
  </bsbObject>
  <bsbObject type="BSBSpinBox" version="2">
   <objectName>sound1</objectName>
-  <x>39</x>
-  <y>292</y>
+  <x>112</x>
+  <y>291</y>
   <width>80</width>
   <height>25</height>
   <uuid>{8a4b41b7-ef02-4ab1-95f0-817710599202}</uuid>
@@ -456,7 +494,7 @@ endin
   <minimum>0</minimum>
   <maximum>3</maximum>
   <randomizable group="0">false</randomizable>
-  <value>2</value>
+  <value>1</value>
  </bsbObject>
  <bsbObject type="BSBButton" version="2">
   <objectName>button5</objectName>
@@ -476,6 +514,123 @@ endin
   <eventLine>i "deviationLine"  0 20 1 0</eventLine>
   <latch>false</latch>
   <latched>false</latched>
+ </bsbObject>
+ <bsbObject type="BSBSpinBox" version="2">
+  <objectName>square1</objectName>
+  <x>113</x>
+  <y>325</y>
+  <width>80</width>
+  <height>25</height>
+  <uuid>{7fa3a8f4-7dcb-4b42-90ed-532ef23e1b68}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <resolution>0.05000000</resolution>
+  <minimum>0.1</minimum>
+  <maximum>4</maximum>
+  <randomizable group="0">false</randomizable>
+  <value>0.45</value>
+ </bsbObject>
+ <bsbObject type="BSBLabel" version="2">
+  <objectName/>
+  <x>27</x>
+  <y>325</y>
+  <width>80</width>
+  <height>25</height>
+  <uuid>{48dc336b-032a-4296-8073-f278c91c3e58}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>square1</label>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject type="BSBLabel" version="2">
+  <objectName/>
+  <x>27</x>
+  <y>292</y>
+  <width>80</width>
+  <height>25</height>
+  <uuid>{5514d75c-01dd-4c2c-9073-d39fa6494fb3}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>instrument 1
+</label>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject type="BSBSpinBox" version="2">
+  <objectName>square2</objectName>
+  <x>118</x>
+  <y>359</y>
+  <width>80</width>
+  <height>25</height>
+  <uuid>{7f148e07-c97d-4cfc-a675-74f42ba4fb21}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <resolution>0.05000000</resolution>
+  <minimum>0.1</minimum>
+  <maximum>4</maximum>
+  <randomizable group="0">false</randomizable>
+  <value>0.3</value>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>
