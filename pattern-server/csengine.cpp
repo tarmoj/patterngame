@@ -39,9 +39,10 @@ void CsEngine::run()
 	active <<  0 << 0 <<0;
 
 	while (!mStop  && perfThread.GetStatus() == 0 ) {
-		usleep(500);  // ? et ei teeks tööd kogu aeg
+		usleep(10000);  // ? et ei teeks tööd kogu aeg
 		for (int i=0;i<3;i++) {
 			active[i] = getChannel("active"+QString::number(i+1));
+			emit channelValue(i,active[i]); // TEST
 			if (active[i]!=oldActive[i] && active[i]==0) { // instruments has ended
 				qDebug()<<"Active "<<i<<" "<<active[i];
 				emit sendNewPattern(i);

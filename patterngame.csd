@@ -8,7 +8,7 @@
 sr = 44100
 nchnls = 2
 0dbfs = 1
-ksmps = 8
+ksmps = 4
 
 #define MAXREPETITIONS  #5#
 #define SLENDRO #0#
@@ -60,6 +60,9 @@ chnset 0.5, "level"
 chnset 0.25, "square1"
 chnset 0.25, "square2"
 chnset 0.25, "square3"
+
+chnset 0.25, "delayLevel"
+chnset 0.1, "longDelayLevel"
 
 seed 0
 
@@ -122,9 +125,6 @@ instr clockAndChannels
 	chnset gkIsPlaying[1], "active2"
 	chnset gkIsPlaying[2], "active3"
 		outvalue "display", gkIsPlaying[0]
-
-
-	;outvalue 	"active",gkIsPlaying[0]
 	
 	gkLevel chnget "level"
 
@@ -142,7 +142,9 @@ instr clockAndChannels
 	gkClock[0] metro 1/gkSquareDuration[0]
 	gkClock[1] metro 1/gkSquareDuration[1]
 	gkClock[2] metro 1/gkSquareDuration[2]
-	
+
+	;test:
+	;schedkwhen gkClock[0], 0, 0, "testTick", 0, 0.05
 endin
 
 ; schedule "setSquare",0,10,0,1.11
@@ -180,7 +182,7 @@ instr playPattern ;_i
 
 	irepeatAfter = p5 ; repeat after given squareDurations
 	ivoice = p6 ; three voices
-	ipanOrSpeaker = p7 ; number of speaker if 8 channels, otherwise expresse pan 1-left, 8- right
+	ipanOrSpeaker = (p7==0) ? int(random:i(1,7)) : p7; number of speaker if 8 channels, otherwise expresse pan 1-left, 8- right
 	itotalTime = giPatternLength*i(gkSquareDuration[ivoice]) + itimes*irepeatAfter*i(gkSquareDuration[ivoice])
 	print ivoice, itotalTime
 	; TODO: how to handle csound-played pattern only? ie, not sent by user?
@@ -198,7 +200,7 @@ instr playPattern ;_i
 	kcounter init 0
 	if (gkClock[ivoice]==1 && kcounter<giPatternLength ) then
 		if (kcounter==0) then ; start loopPlay on first note
-			schedkwhen gkClock[ivoice], 0, 0, "loopPlay", 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker
+			schedkwhen 1, 0, 0, "loopPlay", 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker
 		endif
 		kstep = giMatrix[ivoice][kcounter] 		
 		if (kstep >= 0) then
@@ -236,15 +238,17 @@ instr deviationLine ; TODO: klõpsud sees!
 	ichange4loopPlay = p5 ; change the looptime
 	
 	if (ichange4sound > 0) then
-		gkDelayFadeIn linseg 0, p3/4,1,p3/2,1, p3/4,0
+		gkDelayFadeIn linseg 0, p3/2,1,p3/4,1, p3/4,0
+		;gkDelayFadeIn *= chnget:k("delayLevel")
 	endif
 	
 	if (ichange4loopPlay > 0) then
 		
-		
-		gkDeviation[0] = 1+ poscil(0.1,1/10)
-		gkDeviation[1] = 1+ poscil(0.1,1/20)
-		gkDeviation[2] = 1+ poscil(0.1,1/30)
+		klongLevel chnget "longDelayLevel"
+		klongLevel port klongLevel, 0.08
+		gkDeviation[0] = 1+ poscil(0.1*klongLevel*2 ,1/10*(1+klongLevel))
+		gkDeviation[1] = 1+ poscil(0.1*klongLevel*2 ,1/10*(1+klongLevel));poscil(0.1,1/20)
+		gkDeviation[2] = 1+ poscil(0.1*klongLevel*2 ,1/10*(1+klongLevel));poscil(0.1,1/30)
 		
 		if (release()==1) then
 			gkDeviation[0] = 1
@@ -280,18 +284,9 @@ instr sound
 	endif
 	
 	asig = asig*iamp*aenv
-	; test small delay here
-	ktempfreq = 1;4.1 + jspline(4,0.1,10)
-	kamp poscil 0.004,1/10
-	;atime = 0.01 + poscil:a(0.005+kamp, ktempfreq)
-	atime = 0.05 + jspline:a(0.04, 0.1, 1)
-	adummy delayr p3+0.1
-	adel1 deltapi  atime
-	adel2 deltapi  atime*2;0.02 + poscil:a(0.003+kamp/2, ktempfreq)
-	adelay = (adel1+adel2)*aenv*gkDelayFadeIn
-	delayw asig + 0.3*adelay
 	
-	gaSignal[ivoice] = gaSignal[ivoice] + adelay+asig
+	
+	gaSignal[ivoice] = gaSignal[ivoice] + asig
 endin
 
 
@@ -311,12 +306,13 @@ mark1:
 	
 	;print p1
 	if (frac(p1)==0) then
-		gkIsPlaying[ivoice] = 1 ; mark only when called without fractional part
+		gkIsPlaying[ivoice] init i(gkIsPlaying[ivoice])+1 ; mark only when called without fractional part
 	endif
 	;gkIsPlaying[ivoice] = gkIsPlaying[ivoice] + 1 ; to allow more than 1 instruments to play
 	
 	iloopTime = irepeatAfter * i(gkSquareDuration[ivoice])
 	;ilastLoop = itimes * irepeatAfter * i(gkSquareDuration[ivoice])
+	prints "LOOPPLAY"
 	print itimes, irepeatAfter, iloopTime;, ilastLoop
 		
 	if (itimes>0) then 
@@ -331,17 +327,29 @@ mark1:
 		adel4 deltapi iloopTime*4*atime
 		adel5 deltapi iloopTime*5*atime
 		
-		adelayed = adel1*iamp[0]+ adel2*iamp[1] + adel3*iamp[2] + adel4*iamp[3] + adel5*iamp[4] 		
+		adelayed = (adel1*iamp[0]+ adel2*iamp[1] + adel3*iamp[2] + adel4*iamp[3] + adel5*iamp[4] ) * port(chnget:k("delayLevel"),0.02,chnget:i("delayLevel"))		
 		delayw gaSignal[ivoice]
 		;adelayed multitap gaSignal[ivoice], iloopTime, iamp[0], iloopTime*2, iamp[1], iloopTime*3, iamp[2], iloopTime*4, iamp[3], iloopTime*5, iamp[4]  
 	else
 		adelayed = 0	
 	endif
 	
-	adeclick linen 1,0.05,p3,0.5 ;1,0.1,0.5, 0.001
-	aout = gaSignal[ivoice] + adelayed
+	
+	adeclick linen 1,0.05,p3,0.5
+	asig = (gaSignal[ivoice] + adelayed) * adeclick
+	
+	; short delay to change the timbre
+	atime2 = 0.05 + jspline:a(0.04, 0.1, 1)
+	adummy2 delayr p3
+	ad1 deltapi  atime2
+	ad2 deltapi  atime2*2;0.02 + poscil:a(0.003+kamp/2, ktempfreq)
+	adelay2 = (ad1+ad2)*gkDelayFadeIn* port(chnget:k("delayLevel"),0.02,chnget:i("delayLevel"))*adeclick
+	delayw asig + 0.1*adelay2
+	
+	
+	
+	aout = (asig+adelay2)*port(gkLevel,0.02,i(gkLevel)) ;*(0.1+gkattention*0.9)
 	aout clip aout, 0, 0dbfs ; for any case
-	aout = aout*port(gkLevel,0.02)*adeclick ;*(0.1+gkattention*0.9)
 	
 	
 	
@@ -356,11 +364,15 @@ mark1:
 	
 	gaSignal[ivoice] = 0
 	if (release()==1 && frac(p1)==0) then
-		gkIsPlaying[ivoice] = 0;gkIsPlaying[ivoice] - 1 ; to allow more than 1 to play
+		gkIsPlaying[ivoice] = gkIsPlaying[ivoice] - 1 ; 0 ; to allow more than 1 to play
 	endif
 endin
-
-
+;
+;instr testTick
+;	asig poscil linen(0.051,0.05,p3,p3/2), 1000
+;	outs asig, asig
+;endin
+;
 
 </CsInstruments>
 <CsScore>
@@ -410,7 +422,7 @@ endin
   <visible>true</visible>
   <midichan>0</midichan>
   <midicc>0</midicc>
-  <label>1.000</label>
+  <label>0.000</label>
   <alignment>left</alignment>
   <font>Liberation Sans</font>
   <fontsize>10</fontsize>
@@ -494,7 +506,7 @@ endin
   <minimum>0</minimum>
   <maximum>3</maximum>
   <randomizable group="0">false</randomizable>
-  <value>1</value>
+  <value>2</value>
  </bsbObject>
  <bsbObject type="BSBButton" version="2">
   <objectName>button5</objectName>
@@ -511,9 +523,9 @@ endin
   <stringvalue/>
   <text>Deviation</text>
   <image>/</image>
-  <eventLine>i "deviationLine"  0 20 1 0</eventLine>
+  <eventLine>i "deviationLine"  0 60 1 1</eventLine>
   <latch>false</latch>
-  <latched>false</latched>
+  <latched>true</latched>
  </bsbObject>
  <bsbObject type="BSBSpinBox" version="2">
   <objectName>square1</objectName>
@@ -542,7 +554,7 @@ endin
   <minimum>0.1</minimum>
   <maximum>4</maximum>
   <randomizable group="0">false</randomizable>
-  <value>0.45</value>
+  <value>0.25</value>
  </bsbObject>
  <bsbObject type="BSBLabel" version="2">
   <objectName/>
@@ -630,7 +642,101 @@ endin
   <minimum>0.1</minimum>
   <maximum>4</maximum>
   <randomizable group="0">false</randomizable>
-  <value>0.3</value>
+  <value>0.25</value>
+ </bsbObject>
+ <bsbObject type="BSBVSlider" version="2">
+  <objectName>delayLevel</objectName>
+  <x>244</x>
+  <y>212</y>
+  <width>20</width>
+  <height>100</height>
+  <uuid>{94cb95cb-4130-448c-b153-996420e2a8f3}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>0.00000000</minimum>
+  <maximum>2.00000000</maximum>
+  <value>0.25000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject type="BSBLabel" version="2">
+  <objectName/>
+  <x>228</x>
+  <y>317</y>
+  <width>64</width>
+  <height>51</height>
+  <uuid>{28a0be51-7461-48b9-ab9d-fb5e2bcc723d}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Short delay level</label>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject type="BSBVSlider" version="2">
+  <objectName>longDelayLevel</objectName>
+  <x>318</x>
+  <y>213</y>
+  <width>20</width>
+  <height>100</height>
+  <uuid>{eb095077-87cf-45b6-89d1-fe9b31382312}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>0.00000000</minimum>
+  <maximum>1.00000000</maximum>
+  <value>0.52000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject type="BSBLabel" version="2">
+  <objectName/>
+  <x>302</x>
+  <y>318</y>
+  <width>64</width>
+  <height>51</height>
+  <uuid>{1dd8439d-3b05-4191-a8f4-8104a7208c5d}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Long delay freq</label>
+  <alignment>left</alignment>
+  <font>Liberation Sans</font>
+  <fontsize>10</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>

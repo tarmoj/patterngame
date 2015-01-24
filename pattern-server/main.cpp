@@ -12,10 +12,13 @@ int main(int argc, char *argv[])
 
 	WsServer *wsServer;
 	wsServer = new WsServer(10010);
+	CsEngine cs("patterngame.csd");
 
     QQmlApplicationEngine engine;
 	//bind object before load
 	engine.rootContext()->setContextProperty("wsServer", wsServer); // forward c++ object that can be reached form qml by object name "csound"
+
+	engine.rootContext()->setContextProperty("cs", &cs);  // to test
 	engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 
 
@@ -24,7 +27,7 @@ int main(int argc, char *argv[])
 	//mainQml->setProperty("clientsCount",0);
 
 
-	CsEngine cs("patterngame.csd");
+
 	cs.start();
 	qDebug()<<"Csound started";
 

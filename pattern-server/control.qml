@@ -4,8 +4,8 @@ import QtQuick.Controls 1.2
 
 Rectangle {
     id: rectangle1
-    width: 500
-    height: 380
+    width: 536
+    height: 500
     gradient: Gradient {
         GradientStop {
             position: 0
@@ -43,7 +43,7 @@ Rectangle {
         socket.active = true;
     }
 
-    Component.onDestruction: socket.active = false;
+    //Component.onDestruction: socket.active = false;
 
     Column {
         id: mainColumn
@@ -99,7 +99,7 @@ Rectangle {
                 enabled: socket.active
                 text: qsTr("Send")
                 onClicked: {
-                    if (socket.active)
+                    if (socket.status == WebSocket.Open)
                         socket.sendTextMessage(command.text);
                 }
             }
@@ -117,11 +117,69 @@ Rectangle {
             Slider {
                 id: volumesSlider
                 value: 0.6
-                onValueChanged: socket.sendTextMessage("property,level,"+this.value);
+                stepSize: 0.05
+                onValueChanged: if (socket.status == WebSocket.Open)
+                                    socket.sendTextMessage("property,level,"+this.value);
             }
 
 
         }
+
+        Row {
+            spacing: 5
+            Label {text:qsTr("Delay deviations: ")}
+            Button {
+                text: qsTr("Timbre 30s")
+                onClicked:  if (socket.status == WebSocket.Open)
+                                socket.sendTextMessage("schedule \"deviationLine\",0,30, 1, 0");
+            }
+
+            Button {
+                text: qsTr("Repetition 30s")
+                onClicked:  if (socket.status == WebSocket.Open)
+                                socket.sendTextMessage("schedule \"deviationLine\",0,30, 0, 1");
+            }
+
+            Button {
+                text: qsTr("Both 60s")
+                onClicked:  if (socket.status == WebSocket.Open)
+                                socket.sendTextMessage("schedule \"deviationLine\",0,60, 1, 1");
+            }
+        }
+
+        Row {
+            spacing: 5
+
+            Label {
+                text: qsTr("Short delay level:")
+            }
+
+            Slider {
+                id: delayLevelSlider
+                value: 0.25
+                stepSize: 0.01
+                width: 80
+                onValueChanged: if (socket.status == WebSocket.Open)
+                                    socket.sendTextMessage("property,delayLevel,"+this.value);
+            }
+
+            Label {
+                text: qsTr("Long delay level:")
+            }
+
+            Slider {
+                id: longDelaySlider
+                value: 0.1
+                stepSize: 0.01
+                width: 80
+                onValueChanged: if (socket.status == WebSocket.Open)
+                                    socket.sendTextMessage("property,longDelayLevel,"+this.value);
+            }
+
+
+        }
+
+
 
         Row {
             spacing: 5
@@ -135,11 +193,47 @@ Rectangle {
                 model: ["Slendro","Pelog","Bohlen-Pierce"]
                 onCurrentIndexChanged: {
                     console.log("New index: ", currentIndex);
-                    socket.sendTextMessage("schedule \"setMode\", 0,0,"+currentIndex);
+                     if (socket.status == WebSocket.Open)
+                         socket.sendTextMessage("schedule \"setMode\", 0,0,"+currentIndex);
                 }
 
             }
 
+
+        }
+
+        Row {
+            id: sectionsRow
+
+            Button {
+                text: qsTr("Section 1")
+                onClicked: {
+                    scaleBox.currentIndex = 0;
+                    voicesRepeater.itemAt(0).squareDuration = 0.25;
+                    voicesRepeater.itemAt(1).squareDuration = 0.25;
+                    voicesRepeater.itemAt(2).squareDuration = 0.25;
+                }
+            }
+
+            Button {
+                text: qsTr("Section 2")
+                onClicked: {
+                    scaleBox.currentIndex = 1;
+                    voicesRepeater.itemAt(0).squareDuration = 1;
+                    voicesRepeater.itemAt(1).squareDuration = 1;
+                    voicesRepeater.itemAt(2).squareDuration = 1;
+                }
+            }
+
+            Button {
+                text: qsTr("Section 3")
+                onClicked: {
+                    scaleBox.currentIndex = 2;
+                    voicesRepeater.itemAt(0).squareDuration = 0.2;
+                    voicesRepeater.itemAt(1).squareDuration = 0.3;
+                    voicesRepeater.itemAt(2).squareDuration = 0.5;
+                }
+            }
 
         }
 
@@ -157,8 +251,8 @@ Rectangle {
 
 
                 Rectangle {
-                    width: 150
-                    height: 220
+                    width: 160
+                    height: 240
                     //"#f1c112"
                     border.color: "black"
                     radius: 10
@@ -175,6 +269,7 @@ Rectangle {
                     }
                     border.width: 2
                     property int voice: parent.index
+                    property real squareDuration: 0.25
 
                     Column {
                         id: voiceColumn
@@ -193,40 +288,46 @@ Rectangle {
 
                         Button {
                             text: qsTr("Random pattern")
-                            onClicked: socket.sendTextMessage("random,"+voice)
+                            onClicked:  if (socket.status == WebSocket.Open)
+                                            socket.sendTextMessage("random,"+voice)
                         }
 
                         Button {
                             text: qsTr("Csound pattern")
-                            onClicked: socket.sendTextMessage("schedule nstrnum(\"playPattern_i\")+rnd(1),0,0,4,4,"+voice); // use fractional number not to interrupt the previous one
+                            onClicked:  if (socket.status == WebSocket.Open)
+                                            socket.sendTextMessage("schedule nstrnum(\"playPattern\")+rnd(1),0,0,4,4,"+voice); // use fractional number not to interrupt the previous one
                         }
 
                         Button {
                             text: qsTr("Release first in que")
-                            onClicked: socket.sendTextMessage("new,"+voice)
+                            onClicked:  if (socket.status == WebSocket.Open)
+                                            socket.sendTextMessage("new,"+voice)
                         }
 
                         Button {
                             text: qsTr("Empty que")
-                            onClicked: socket.sendTextMessage("clear,"+voice);
+                            onClicked:  if (socket.status == WebSocket.Open)
+                                            socket.sendTextMessage("clear,"+voice);
                         }
 
                         ComboBox {
                             id: soundCombo
                             model: ["sine","fmbell","moogladder","reson-noise"]
-                            onCurrentIndexChanged: socket.sendTextMessage("property,sound"+(voice+1)+","+currentIndex);
+                            onCurrentIndexChanged:  if (socket.status == WebSocket.Open)
+                                                        socket.sendTextMessage("property,sound"+(voice+1)+","+currentIndex);
                         }
 
                         Label {text:qsTr("Square duration") }
 
                         SpinBox {
-                            id: squareDuration
+                            id: squareDurationBox
                             stepSize: 0.05
                             minimumValue: 0.1
                             maximumValue: 4
                             decimals: 2
-                            value: 0.25
-                            onEditingFinished: socket.sendTextMessage("square,"+voice+","+value)
+                            value: squareDuration
+                            onValueChanged:  if (socket.status == WebSocket.Open)
+                                                    socket.sendTextMessage("square,"+voice+","+value)
                         }
 
                     }

@@ -4,7 +4,7 @@
 #include <QThread>
 #include <csound/csound.hpp>
 #include <csound/csPerfThread.hpp>
-#include <QMutex>
+//#include <QMutex>
 
 
 class CsEngine : public QThread
@@ -36,6 +36,7 @@ public:
     Csound *getCsound();
 signals:
 	void sendNewPattern(int voice); // sent when a new pattern can be sent for the voice
+	void channelValue(int voice, int value); // TeST only
 
 public slots:
 	void handleMessage(QString message); //

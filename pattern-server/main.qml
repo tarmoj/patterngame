@@ -9,6 +9,9 @@ ApplicationWindow {
     title: qsTr("Patterngame server")
     property int clientsCount: 0
     property string mode: "Slendro"
+    property int  active1
+    property int  active2
+    property int active3
 
 
     Connections {
@@ -25,7 +28,17 @@ ApplicationWindow {
                 patternRects.itemAt(voice).namesInQue = names;
                 //console.log(patternRects.itemAt(voice).namesInQue);
             }
+
           }
+    Connections {
+        target: cs
+        onChannelValue: {
+            if (voice==0) active1=value;
+            if (voice==1) active2=value;
+            if (voice==2) active3=value;
+        }
+    }
+
 
     function setClientsCount(count) {
         clientsCountLabel.text = "Clients: " + count;
@@ -61,19 +74,19 @@ ApplicationWindow {
 
     // menu ----------------
 
-    menuBar: MenuBar {
-        Menu {
-            title: qsTr("File")
-            MenuItem {
-                text: qsTr("&Open")
-                onTriggered: console.log("Open action triggered");
-            }
-            MenuItem {
-                text: qsTr("Exit")
-                onTriggered: Qt.quit();
-            }
-        }
-    }
+//    menuBar: MenuBar {
+//        Menu {
+//            title: qsTr("File")
+//            MenuItem {
+//                text: qsTr("&Open")
+//                onTriggered: console.log("Open action triggered");
+//            }
+//            MenuItem {
+//                text: qsTr("Exit")
+//                onTriggered: Qt.quit();
+//            }
+//        }
+//    }
 
     // UI ----------------------
 
@@ -93,6 +106,11 @@ ApplicationWindow {
                 id:clientsCountLabel
                 color: "#ffff00"
                 text: qsTr("Clients: " + clientsCount)
+            }
+
+            Label {
+                color: "yellow"
+                text: "active flags:"+active1+active2+active3
             }
 
 //            Label {
