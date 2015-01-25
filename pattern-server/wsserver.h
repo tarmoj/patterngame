@@ -32,6 +32,7 @@ Q_SIGNALS:
 	void namesChanged(int voice, QString names);
 	void newPropertyValue(QString property, double value);
 	void newCodeToComplie(QString code);
+	void newSquare(int voice, double duration);
 
 
 private Q_SLOTS:

@@ -3,6 +3,7 @@ import QtQuick.Controls 1.2
 import Qt.WebSockets 1.0
 
 ApplicationWindow {
+    id: mainWindow
     visible: true
     width: 940
     height: 580
@@ -17,16 +18,19 @@ ApplicationWindow {
     Connections {
             target: wsServer
             onNewConnection: {
-               console.log(connectionsCount)
+               //console.log(connectionsCount)
                setClientsCount(connectionsCount)
               }
             onNewMessage: {
                 handleMessage(messageString);
             }
             onNamesChanged: {
-                console.log(voice, names);
+                //console.log(voice, names);
                 patternRects.itemAt(voice).namesInQue = names;
                 //console.log(patternRects.itemAt(voice).namesInQue);
+            }
+            onNewSquare: {
+                patternRects.itemAt(voice).squareDuration = duration;
             }
 
           }
@@ -89,6 +93,14 @@ ApplicationWindow {
 //    }
 
     // UI ----------------------
+
+    // launch also controller window
+
+    Component.onCompleted: {
+        var component = Qt.createComponent("control.qml");
+                   var win = component.createObject(mainWindow);
+                   win.show();
+    }
 
     Rectangle {
         id: mainRect

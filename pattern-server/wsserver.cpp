@@ -105,6 +105,7 @@ void WsServer::processTextMessage(QString message)
 		//emit newCodeToComplie(code);
 		qDebug()<<"Voice "<<voice<<" New square duration: "<<duration;
 		emit newPropertyValue("square"+QString::number(voice+1), messageParts[2].toDouble()); // set via channel
+		emit newSquare(voice, duration);
 
 		//TODO: squareDuration to PatternRect
 

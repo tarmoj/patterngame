@@ -1,11 +1,18 @@
 import QtQuick 2.0
 import Qt.WebSockets 1.0
 import QtQuick.Controls 1.2
+import QtQuick.Window 2.1
+
+Window {
+    width: 540
+    height: 500
+
 
 Rectangle {
     id: rectangle1
-    width: 536
-    height: 500
+    //width: 536
+    //height: 500
+    anchors.fill: parent
     gradient: Gradient {
         GradientStop {
             position: 0
@@ -43,7 +50,7 @@ Rectangle {
         socket.active = true;
     }
 
-    //Component.onDestruction: socket.active = false;
+    Component.onDestruction: socket.active = false; // does not work
 
     Column {
         id: mainColumn
@@ -312,7 +319,7 @@ Rectangle {
 
                         ComboBox {
                             id: soundCombo
-                            model: ["sine","fmbell","moogladder","reson-noise"]
+                            model: ["sine", "waveterrain1",  "moogladder",  "fmbell","waveterrain2","reson-noise"]
                             onCurrentIndexChanged:  if (socket.status == WebSocket.Open)
                                                         socket.sendTextMessage("property,sound"+(voice+1)+","+currentIndex);
                         }
@@ -352,5 +359,7 @@ Rectangle {
 
     }
 
+
+}
 
 }

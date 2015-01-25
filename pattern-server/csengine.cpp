@@ -42,14 +42,17 @@ void CsEngine::run()
 		usleep(10000);  // ? et ei teeks tööd kogu aeg
 		for (int i=0;i<3;i++) {
 			active[i] = getChannel("active"+QString::number(i+1));
-			emit channelValue(i,active[i]); // TEST
-			if (active[i]!=oldActive[i] && active[i]==0) { // instruments has ended
-				qDebug()<<"Active "<<i<<" "<<active[i];
-				emit sendNewPattern(i);
+			if (active[i]!=oldActive[i]) {
+				emit channelValue(i,active[i]); // TEST
+
+				if (active[i]==0) { // instruments has ended
+					qDebug()<<"Active "<<i<<" "<<active[i];
+					emit sendNewPattern(i);
+				}
+				oldActive[i] = active[i];
 			}
-			oldActive[i] = active[i];
 		}
-    }
+	}
     qDebug()<<"Stopping thread";
     perfThread.Stop();
     perfThread.Join();

@@ -14,7 +14,7 @@ Rectangle {
     property string namesInQue
     property color activeColor: "lightgreen"
     property color inActiveColor: "darkgreen"
-    property real squareDuration: 0
+    property double squareDuration: 0.25
     property int speaker: 0
     //TODO: active and inactive color as properties
 
@@ -80,7 +80,7 @@ Rectangle {
 
         Text {
             color: "white"
-            text: qsTr("Square duration: "+ squareDuration)
+            text: qsTr("Square duration: "+ squareDuration.toFixed(2) )
             font.pixelSize: 12
         }
 

@@ -6,7 +6,7 @@
 <CsInstruments>
 
 sr = 44100
-nchnls = 2
+nchnls = 8;2
 0dbfs = 1
 ksmps = 4
 
@@ -275,8 +275,8 @@ instr sound
 	elseif (isound==1) then
 		;kcx     line    0.1, p3, 1; max -15 ... 15
 		;krx line 0.1,p3, 0.5
-		kcx   init random:i(0,0.5);  line    0, p3, 0.2
-		krx     linseg  0.1, p3/2, random:i(0.1,0.9), p3/2, 0.1
+		kcx   init random:i(0.1,0.5);  line    0, p3, 0.2
+		krx     linseg  0.1, p3/2, random:i(0.2,0.6), p3/2, 0.1
 		awterr      wterrain    1, ifreq,kcx, 0, krx/2, krx, -1, -1
 		asig      dcblock awterr ; DC blocking filter
 	elseif (isound==3) then 
@@ -291,6 +291,7 @@ instr sound
 		krx line random:i(0.1,4) ,p3, random:i(0.1,4)
 		awterr      wterrain    1, ifreq,kcx, 0, krx/2, krx, -1, -1
 		asig      dcblock awterr ; DC blocking filte
+		asig butterlp asig,2000
 	else
 		asig pinker
 		asig moogvcf asig, line(ifreq*(1+rnd(6)),p3,ifreq*(2+rnd(2))), random:i(0.5,0.9)
@@ -435,7 +436,7 @@ endin
   <visible>true</visible>
   <midichan>0</midichan>
   <midicc>0</midicc>
-  <label>1.000</label>
+  <label>0.000</label>
   <alignment>left</alignment>
   <font>Liberation Sans</font>
   <fontsize>10</fontsize>
