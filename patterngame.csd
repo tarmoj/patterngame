@@ -272,12 +272,25 @@ instr sound
 	if (isound==0) then 
 		asig poscil 1,ifreq ;,giSine
 		asig chebyshevpoly asig, 0, 1, rnd(0.2), rnd(0.1),rnd(0.1), rnd(0.1), rnd(0.05), rnd(0.03) ; add some random timbre
-	elseif (isound==1) then 
+	elseif (isound==1) then
+		;kcx     line    0.1, p3, 1; max -15 ... 15
+		;krx line 0.1,p3, 0.5
+		kcx   init random:i(0,0.5);  line    0, p3, 0.2
+		krx     linseg  0.1, p3/2, random:i(0.1,0.9), p3/2, 0.1
+		awterr      wterrain    1, ifreq,kcx, 0, krx/2, krx, -1, -1
+		asig      dcblock awterr ; DC blocking filter
+	elseif (isound==3) then 
 		asig fmbell	1, ifreq,random:i(0.8,2), random:i(0.5,1.1),0.005,4
 	
 	elseif (isound==2) then	
 		asig vco2 1, ifreq
 		asig moogladder asig, line(ifreq*(1+rnd(6)),p3,ifreq*(2+rnd(2))), 0.8
+	elseif (isound==4) then	
+		ix random 4,10
+		kcx   line -ix,p3,ix 
+		krx line random:i(0.1,4) ,p3, random:i(0.1,4)
+		awterr      wterrain    1, ifreq,kcx, 0, krx/2, krx, -1, -1
+		asig      dcblock awterr ; DC blocking filte
 	else
 		asig pinker
 		asig moogvcf asig, line(ifreq*(1+rnd(6)),p3,ifreq*(2+rnd(2))), random:i(0.5,0.9)
@@ -384,7 +397,7 @@ endin
  <objectName/>
  <x>0</x>
  <y>0</y>
- <width>198</width>
+ <width>366</width>
  <height>384</height>
  <visible>true</visible>
  <uuid/>
@@ -422,7 +435,7 @@ endin
   <visible>true</visible>
   <midichan>0</midichan>
   <midicc>0</midicc>
-  <label>0.000</label>
+  <label>1.000</label>
   <alignment>left</alignment>
   <font>Liberation Sans</font>
   <fontsize>10</fontsize>
@@ -504,9 +517,9 @@ endin
   </bgcolor>
   <resolution>1.00000000</resolution>
   <minimum>0</minimum>
-  <maximum>3</maximum>
+  <maximum>5</maximum>
   <randomizable group="0">false</randomizable>
-  <value>2</value>
+  <value>4</value>
  </bsbObject>
  <bsbObject type="BSBButton" version="2">
   <objectName>button5</objectName>
@@ -525,7 +538,7 @@ endin
   <image>/</image>
   <eventLine>i "deviationLine"  0 60 1 1</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
  <bsbObject type="BSBSpinBox" version="2">
   <objectName>square1</objectName>
@@ -703,7 +716,7 @@ endin
   <midicc>0</midicc>
   <minimum>0.00000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.52000000</value>
+  <value>0.10000000</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
