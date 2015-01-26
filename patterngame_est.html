@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="content-type">
-    <title>Pattern game</title>
+    <title>Mustrimäng</title>
     <meta content="Tarmo Johannes" id="author">
 	
 	<link type="text/css" rel="stylesheet" href="soundgames.css">
@@ -12,28 +12,28 @@
 	<script defer="defer" src="patterngame-ui.js">	</script>
   </head>
   <body>
-	<span style='margin-left:440px'><small><i><a href="patterngame_est.html">Eesti</a></i></small></span>
-  <h1>Pattern game</h1><br>
+  <span style='margin-left:440px'><small><i><a href="patterngame.html">English</a></i></small></span>
+  <h1>Mustrimäng</h1><br>
     
     <form name = "myform">
-    Your name:<input type="text" id="name" value="Anonymous"  style="font-size:16px"></input><br>
-    Octave/range: <input value=0 name="octave" type="radio">low&nbsp;&nbsp; <input
-      checked="checked" value=1 name="octave" type="radio">middle&nbsp;&nbsp;
-    <input value=2 name="octave" type="radio">high <br>
+    Teie nimi:<input type="text" id="name" value="Anonymous"  style="font-size:16px"></input><br>
+    Oktaav (üldine kõrgus): <input value=0 name="octave" type="radio">madal&nbsp;&nbsp; <input
+      checked="checked" value=1 name="octave" type="radio">keskmine&nbsp;&nbsp;
+    <input value=2 name="octave" type="radio">kõrge <br>
     <br>
     <br>
-    Choose scale (different set of pitches): 
+    Vali helirida: 
      <select id="mode" onchange="setMode(parseInt(this.value));"  style="font-size:22px">
 	<option value="0">(Pseudo) slendro (5 steps)</option>
 	<option value="1">Harrison's pelog (7 steps) </option>
 	<option value="2">Bohlen-Pierce justtone (9 steps)</option>
 	</select> 
 	<br><br>
-	Tap or click on the green squares to build thes sound pattern.
+	Klõpsa või vajuta rohelistele ruutudele, et moodustada meloodia.
 	<br>
     <div id="container"></div>
     <br>
-     Send to speaker: 
+     Saada kõlarisse: 
     <input checked="checked" value=1 name="speaker" type="radio">1 
     <input value=2 name="speaker" type="radio">2
     <input value=3 name="speaker" type="radio">3
@@ -44,19 +44,21 @@
     <input value=8 name="speaker" type="radio">8
     <br>
 	<br>
-    Play the melody <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=parseInt(repeatCount.value)+1"
+    Mängi meloodia <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=parseInt(repeatCount.value)+1"
     onchange="oscil.repeatCount=parseInt(this.value+)"> 
     <output name="repeat_label" for="repeatCount" id="repeat_label">0</output>
-    times<br><br>
-    Start repetition after <input type="range" class="range" id="delay" min=2 max=10 step=1 value=8 onchange="oscil.delay=parseInt(this.value)" oninput="delay_label.value=delay.value"> 
+    korda<br><br>
+    Alusta kordamist <input type="range" class="range" id="delay" min=2 max=10 step=1 value=8 onchange="oscil.delay=parseInt(this.value)" oninput="delay_label.value=delay.value"> 
     <output name="delay_label" for="delay" id="delay_label">8</output> 
-    units (square durations).
+    ruudu järel.
     <br><br><br>
-    <button type="button" class="button" id="listenButton" onclick="oscil.play()">Listen</button>  
-    <button type="button" class="button" id="sendButton" onclick="sendEvent()" disabled="true">Send to server</button>
+    <button type="button" class="button" id="listenButton" onclick="oscil.play()">Kuula</button>  
+    <button type="button" class="button" id="sendButton" onclick="sendEvent()" disabled="true">Saada serverisse</button>
     <br>
     <br>
-   
+    
+    
+
     <div id="messageText"> </div><br>
     <br>
     

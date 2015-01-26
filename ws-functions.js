@@ -9,6 +9,7 @@
 		websocket.onclose = function(evt) { onClose(evt) };
 		websocket.onmessage = function(evt) { onMessage(evt) };
 		websocket.onerror = function(evt) { onError(evt) };
+		
 	}
 
 	function onOpen(evt)
@@ -16,6 +17,8 @@
 		writeToScreen("connected\n");
 		document.myform.connectButton.disabled = true;
 		document.myform.sendButton.disabled = false;
+		//only in patterngame:
+		document.myform.mode.disabled = true;
 	}
 
 	function onClose(evt)

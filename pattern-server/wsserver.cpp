@@ -64,8 +64,15 @@ void WsServer::processTextMessage(QString message)
 
 	if (message.startsWith("random")) { // create random pattern, add to que format: random,<voice>
 		int voice = messageParts[1].toInt();
+		QString steps="";
+		QList <int> stepCount;
+		stepCount<<6<<8<<10;
+		for (int i=0;i<stepCount[mode];i++)  { // pattern length depends on mode
+			steps+=","+QString::number(randInt(-1,stepCount[mode]-1));
+		}
 		QString pattern;
-		pattern.sprintf("pattern,tester%d,%d,%d,%d,%d,steps:,%d,%d,%d,%d,%d,%d",randInt(1,100),voice, randInt(0,5),randInt(2,10), randInt(1,8), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5), randInt(-1,5) );
+		pattern.sprintf("pattern,tester%d,%d,%d,%d,%d,steps:",randInt(1,100),voice, randInt(0,5),randInt(2,10), randInt(1,8));
+		pattern += steps;
 		qDebug()<<"Generated random pattern for voice "<<voice<<": "<<pattern;
 		message=pattern; // replace message for further processing
 		messageParts = message.split(",");
