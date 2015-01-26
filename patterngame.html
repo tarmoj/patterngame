@@ -157,21 +157,40 @@
       function drawEverything() { 
        var stage = new Kinetic.Stage({
           container: 'container',
-          width: 400,
-          height: 400
+          width: 460,
+          height: 460
         });
         
-        var padding = (stage.getHeight()-8)*0.2/MAX_PITCHES;
-		var square_width = (stage.getHeight()-8)*0.7/MAX_PITCHES; //(stage.getHeight()-24)*0.8/MAX_PITCHES; //((Math.min( (stage.getWidth()-8)*0.8/MAX_NOTES, (stage.getHeight()+8)*0.8/MAX_PITCHES );
+        var padding = (stage.getHeight()-32)*0.2/MAX_PITCHES;
+		var square_width = (stage.getHeight()-32)*0.7/MAX_PITCHES; //(stage.getHeight()-24)*0.8/MAX_PITCHES; //((Math.min( (stage.getWidth()-8)*0.8/MAX_NOTES, (stage.getHeight()+8)*0.8/MAX_PITCHES );
 		//console.log(padding, square_width);
 		//stage.setHeight();
         
         var layer = new Kinetic.Layer();
         
+        var label1 =  new Kinetic.Text({ x: 4, y: 4,text: "1", fill: 'yellow', fontSize: 24  });
+        layer.add(label1);
+        var label2 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 4,text: "2", fill: 'yellow', fontSize: 24  });
+        layer.add(label2);
+        var label3 =  new Kinetic.Text({ x: 4, y: 150,text: "3", fill: 'yellow', fontSize: 24  });
+        layer.add(label3);
+        var label4 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 150,text: "4", fill: 'yellow', fontSize: 24  });
+        layer.add(label4);
+        var label5 =  new Kinetic.Text({ x: 4, y: 350,text: "5", fill: 'yellow', fontSize: 24  });
+        layer.add(label5);
+        var label6 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 350,text: "6", fill: 'yellow', fontSize: 24  });
+        layer.add(label6);
+        var label7 =  new Kinetic.Text({ x: stage.getWidth()/2+4, y: 4,text: "7", fill: 'yellow', fontSize: 24  });
+        layer.add(label7);
+        var label8 =  new Kinetic.Text({ x: stage.getWidth()/2+4, y: 440,text: "8", fill: 'yellow', fontSize: 24  });
+        layer.add(label8);
+        
+        
+        
         var border_rect = new Kinetic.Rect({
 			width: (square_width+padding)*MAX_NOTES+padding,
 			height: (square_width+padding)*MAX_PITCHES+padding,
-			x: 4, y:4,
+			x: 32, y:32,
 			stroke: 'lightgrey',
 			strokeWidth: 3
 		});
@@ -256,7 +275,7 @@
 	function setMode(mode) {
 		//var mode = parseInt(document.myform.mode.value);
 		document.myform.mode.value = mode;
-		document.myform.mode.disabled = true;
+		//document.myform.mode.disabled = true;
 		switch (mode) {
 			case 0:
 				MAX_NOTES = 6;
