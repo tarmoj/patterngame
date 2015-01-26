@@ -98,14 +98,25 @@ Rectangle {
         Row {
             spacing: 4
             id: patternRow //<- TODO: loogilisemad nimed
+            //test for labels:
+            Column {
+                spacing: 4
+                Repeater {
+                    model: maxRows
+                    Text {color:"red"; text: 10-index; font.pixelSize: 17 }
+                }
+            }
+
             Repeater {
                 model: maxColumns
                 id: columns
 
 
+
                 Column  {
                     id: patternColumn
                     spacing: 4
+
 
                     Repeater {
                         model: maxRows
