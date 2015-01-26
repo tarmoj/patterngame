@@ -6,7 +6,7 @@
 <CsInstruments>
 
 sr = 44100
-nchnls = 8;2
+nchnls = 2;8;2
 0dbfs = 1
 ksmps = 4
 
@@ -161,7 +161,7 @@ endin
 
 
 ;schedule "playPattern",0.21,0,3, 4, 0
-;schedule "playPattern",0,0,1, 4, 1
+;schedule 6.0123,0,0,1, 4, 1
 instr playPattern_previous ; takes care that incoming messages start "on tick"
 	idur = p3
 	p3 = 10 ; for any case
@@ -177,19 +177,24 @@ endin
 ;schedule 7.1,0,0,1, 4, 0,4
 instr playPattern ;_i
 	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition,	
-	iloopPlay = nstrnum("loopPlay")+frac(p1) ; if called with fractional number, call loopPlay with it, then the gkIsPlaying flag is not set - useful for creating thicker textures
-	;print iloopPlay
+	
 
 	irepeatAfter = p5 ; repeat after given squareDurations
 	ivoice = p6 ; three voices
 	ipanOrSpeaker = (p7==0) ? int(random:i(1,7)) : p7; number of speaker if 8 channels, otherwise expresse pan 1-left, 8- right
 	itotalTime = giPatternLength*i(gkSquareDuration[ivoice]) + itimes*irepeatAfter*i(gkSquareDuration[ivoice])
+	if (frac(p1)==0) then 
+		iloopPlay = nstrnum("loopPlay") + (ivoice+1)/10
+	else
+		iloopPlay = nstrnum("loopPlay")+frac(p1) ; if called with fractional number, call loopPlay with it, then the gkIsPlaying flag is not set - useful for creating thicker textures
+	;print iloopPlay
+	endif
 	print ivoice, itotalTime
 	; TODO: how to handle csound-played pattern only? ie, not sent by user?
 	
-	;if (frac(p1)==0 && i(gkIsPlaying[ivoice])==1) then ; if loopPlay is already on and the instrument is called by user (ie without fractional part), don't start it and stop here.
-		;turnoff
-	;else 
+	if (frac(iloopPlay)>0.05 && i(gkIsPlaying[ivoice])==1) then ; if loopPlay is already on and the instrument is called by user (ie without fractional part), don't start it and stop here.
+		turnoff
+	endif
 		;schedule iloopPlay, 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker ; set the loop player to be on for pattern+ repetitions;
 	;endif
 	
@@ -199,8 +204,8 @@ instr playPattern ;_i
 	p3 = 40 ; for any case, maximal pattern duration 10*4 seconds
 	kcounter init 0
 	if (gkClock[ivoice]==1 && kcounter<giPatternLength ) then
-		if (kcounter==0) then ; start loopPlay on first note
-			schedkwhen 1, 0, 0, "loopPlay", 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker
+		if (kcounter==0) then ; start loopPlay on first note allow normal loopplay o
+			schedkwhen 1, 0, 0, iloopPlay, 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker
 		endif
 		kstep = giMatrix[ivoice][kcounter] 		
 		if (kstep >= 0) then
@@ -318,9 +323,9 @@ mark1:
 	ivoice = p6
 	ipanOrSpeaker = p7
 	
-	;print p1
-	if (frac(p1)==0) then
-		gkIsPlaying[ivoice] init i(gkIsPlaying[ivoice])+1 ; mark only when called without fractional part
+	print frac(p1)
+	if (frac(p1)>=0.0999) then ; if just play, dont look for beginning and end, let the fractional part be under 0.1 (like 0.01)
+		gkIsPlaying[ivoice]= 1 ;init i(gkIsPlaying[ivoice])+1 ; mark only when called without fractional part
 	endif
 	;gkIsPlaying[ivoice] = gkIsPlaying[ivoice] + 1 ; to allow more than 1 instruments to play
 	
@@ -377,8 +382,8 @@ mark1:
 	endif 	 
 	
 	gaSignal[ivoice] = 0
-	if (release()==1 && frac(p1)==0) then
-		gkIsPlaying[ivoice] = gkIsPlaying[ivoice] - 1 ; 0 ; to allow more than 1 to play
+	if (release()==1  && frac(p1)>=0.06 )then  
+		gkIsPlaying[ivoice] = 0;gkIsPlaying[ivoice] - 1 ; 0 ; to allow more than 1 to play
 	endif
 endin
 ;
@@ -407,7 +412,7 @@ endin
   <g>255</g>
   <b>255</b>
  </bgcolor>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>17</x>
   <y>72</y>
@@ -424,9 +429,9 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 0 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
- <bsbObject type="BSBDisplay" version="2">
+ <bsbObject version="2" type="BSBDisplay">
   <objectName>display</objectName>
   <x>78</x>
   <y>194</y>
@@ -455,7 +460,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>107</y>
@@ -474,7 +479,7 @@ endin
   <latch>false</latch>
   <latched>true</latched>
  </bsbObject>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>143</y>
@@ -493,7 +498,7 @@ endin
   <latch>false</latch>
   <latched>true</latched>
  </bsbObject>
- <bsbObject type="BSBSpinBox" version="2">
+ <bsbObject version="2" type="BSBSpinBox">
   <objectName>sound1</objectName>
   <x>112</x>
   <y>291</y>
@@ -522,7 +527,7 @@ endin
   <randomizable group="0">false</randomizable>
   <value>4</value>
  </bsbObject>
- <bsbObject type="BSBButton" version="2">
+ <bsbObject version="2" type="BSBButton">
   <objectName>button5</objectName>
   <x>45</x>
   <y>251</y>
@@ -541,7 +546,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject type="BSBSpinBox" version="2">
+ <bsbObject version="2" type="BSBSpinBox">
   <objectName>square1</objectName>
   <x>113</x>
   <y>325</y>
@@ -570,7 +575,7 @@ endin
   <randomizable group="0">false</randomizable>
   <value>0.25</value>
  </bsbObject>
- <bsbObject type="BSBLabel" version="2">
+ <bsbObject version="2" type="BSBLabel">
   <objectName/>
   <x>27</x>
   <y>325</y>
@@ -599,7 +604,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject type="BSBLabel" version="2">
+ <bsbObject version="2" type="BSBLabel">
   <objectName/>
   <x>27</x>
   <y>292</y>
@@ -629,7 +634,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject type="BSBSpinBox" version="2">
+ <bsbObject version="2" type="BSBSpinBox">
   <objectName>square2</objectName>
   <x>118</x>
   <y>359</y>
@@ -658,7 +663,7 @@ endin
   <randomizable group="0">false</randomizable>
   <value>0.25</value>
  </bsbObject>
- <bsbObject type="BSBVSlider" version="2">
+ <bsbObject version="2" type="BSBVSlider">
   <objectName>delayLevel</objectName>
   <x>244</x>
   <y>212</y>
@@ -676,7 +681,7 @@ endin
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject type="BSBLabel" version="2">
+ <bsbObject version="2" type="BSBLabel">
   <objectName/>
   <x>228</x>
   <y>317</y>
@@ -705,7 +710,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject type="BSBVSlider" version="2">
+ <bsbObject version="2" type="BSBVSlider">
   <objectName>longDelayLevel</objectName>
   <x>318</x>
   <y>213</y>
@@ -723,7 +728,7 @@ endin
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject type="BSBLabel" version="2">
+ <bsbObject version="2" type="BSBLabel">
   <objectName/>
   <x>302</x>
   <y>318</y>

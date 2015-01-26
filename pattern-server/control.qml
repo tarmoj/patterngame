@@ -302,7 +302,7 @@ Rectangle {
                         Button {
                             text: qsTr("Csound pattern")
                             onClicked:  if (socket.status == WebSocket.Open)
-                                            socket.sendTextMessage("schedule nstrnum(\"playPattern\")+rnd(1),0,0,4,4,"+voice); // use fractional number not to interrupt the previous one
+                                            socket.sendTextMessage("schedule nstrnum(\"playPattern\")+rnd(0.05),0,0,4,4,"+voice); // use fractional number not to interrupt the previous one
                         }
 
                         Button {

@@ -97,6 +97,7 @@ void WsServer::processTextMessage(QString message)
 		int voice = messageParts[1].toInt();
 		freeToPlay[voice]=1;
 		sendFirstMessage(voice);
+		emit newCodeToComplie("gkLevel["+QString::number(voice)+"] init 0"); // also tell csound that new pattern can be started
 
 	} else if (message.startsWith("property")) {
 	// send control messages either for brain-headset or csound cahnnels as f.e. "property,attention,0.25", "property,level,0.5"
