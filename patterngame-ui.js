@@ -64,6 +64,7 @@
 		console.log("Voice: ",voice);
 		console.log(this.repeatCount);
 		for (var a= 0; a<=this.repeatCount; a++ ) {
+			console.log("Repeat: ",this.repeatCount);
 			for (var i=0;i<MAX_NOTES; i++) {
 				pitchIndex = this.getPitchIndex(i);
 				startTime = a*this.delay*squareDuration+i*squareDuration ;

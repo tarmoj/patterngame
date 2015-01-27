@@ -6,7 +6,7 @@
 <CsInstruments>
 
 sr = 44100
-nchnls = 2;8;2
+nchnls = 8;2
 0dbfs = 1
 ksmps = 4
 
@@ -316,7 +316,7 @@ instr loopPlay
 ;find amplitudes for multitap, insert 0, when not needed
 	index = 0
 mark1:
-	iamp[index] =  (index<itimes)  ?  1 - (index+1)/5 : 0
+	iamp[index] =  (index<itimes)  ?  1 - (index+1)/8 : 0
 	loop_lt index, 1, $MAXREPETITIONS, mark1
 	
 	irepeatAfter = p5 ; repeat after given squareDurations
