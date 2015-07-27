@@ -45,7 +45,7 @@
     <br>
 	<br>
     Mängi meloodia <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=parseInt(repeatCount.value)+1"
-    onchange="oscil.repeatCount=parseInt(this.value+)"> 
+    onchange="oscil.repeatCount=parseInt(this.value)"> 
     <output name="repeat_label" for="repeatCount" id="repeat_label">0</output>
     korda<br><br>
     Alusta kordamist <input type="range" class="range" id="delay" min=2 max=10 step=1 value=4 onchange="oscil.delay=parseInt(this.value)" oninput="delay_label.value=delay.value"> 

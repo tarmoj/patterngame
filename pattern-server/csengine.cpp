@@ -103,7 +103,8 @@ void CsEngine::handleMessage(QString message)
 		code += "giMatrix["+voice+"]["+QString::number(j) + "] = " + messageParts[i] +  "\n";
 	}
 
-	code += "\nschedule \"playPattern\",0,0," + repeatNtimes + "," + afterNSquares + "," + voice + "," + panOrSpeaker;
+	QString instrument = QString::number(66 + (voice.toInt()+1)/10.0); // 66.1 - for low voice, 66.2 vor medium, 66.3 high
+	code += "\nschedule "+instrument+",0,0," + repeatNtimes + "," + afterNSquares + "," + voice + "," + panOrSpeaker;
 	qDebug()<<"Message to compile: "<<code;
 	compileOrc(code);
 

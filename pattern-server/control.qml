@@ -319,7 +319,7 @@ Rectangle {
 
                         ComboBox {
                             id: soundCombo
-                            model: ["sine", "waveterrain1",  "moogladder",  "fmbell","waveterrain2","reson-noise"]
+                            model: ["sine", "waveterrain1",  "moogladder",  "fmbell","waveterrain2","additive", "pluck", "reson-noise"]
                             onCurrentIndexChanged:  if (socket.status == WebSocket.Open)
                                                         socket.sendTextMessage("property,sound"+(voice+1)+","+currentIndex);
                         }

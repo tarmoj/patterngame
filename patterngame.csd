@@ -6,7 +6,7 @@
 <CsInstruments>
 
 sr = 44100
-nchnls = 8;2
+nchnls = 2;8;2
 0dbfs = 1
 ksmps = 4
 
@@ -175,7 +175,7 @@ instr playPattern_previous ; takes care that incoming messages start "on tick"
 endin
 
 ;schedule 7.1,0,0,1, 4, 0,4
-instr playPattern ;_i
+instr playPattern,66 ; name and number to bea able to call by number from host ;_i
 	itimes = p4 ; how many times to repeat: 1 means original + 1 repetition,	
 	
 
@@ -265,7 +265,73 @@ endin
 
 ;giSine ftgen 0,0,16384,10,1,0.05,0.04,0.003,0.002,0.001
 ; schedule "sound", 0,  0.25, 0.1, 440
+; schedule "sound", 0,  0.25, 0.1, 440
 instr sound
+	iamp = p4
+	ifreq =  p5
+	ivoice = p6
+	iatt = 0.05
+	;ipan = p7
+	
+	;gkLastPlay[ivoice] init times:i()
+	
+		
+	;aenv expseg 0.0001, iatt, 1, p3-iatt, 0.0001
+	aenv adsr 0.01,0.01,0.6, p3/2
+	; TODO: proovi adsr
+	isound = i(gkSoundType[ivoice]) ;chnget "sound"
+	if (isound==0) then 
+		asig poscil 1,ifreq ;,giSine
+		asig chebyshevpoly asig, 0, 1, rnd(0.2), rnd(0.1),rnd(0.1), rnd(0.1), rnd(0.05), rnd(0.03) ; add some random timbre
+	elseif (isound==1) then
+		;kcx     line    0.1, p3, 1; max -15 ... 15
+		;krx line 0.1,p3, 0.5
+		kcx   init random:i(0.1,0.5);  line    0, p3, 0.2
+		krx     linseg  0.1, p3/2, random:i(0.2,0.6), p3/2, 0.1
+		awterr      wterrain    1, ifreq,kcx, 0, krx/2, krx, -1, -1
+		asig      dcblock awterr ; DC blocking filter
+	elseif (isound==3) then 
+		asig fmbell	1, ifreq,random:i(0.8,2), random:i(0.5,1.1),0.005,4
+	
+	elseif (isound==2) then	
+		asig vco2 1, ifreq
+		asig moogladder asig, line(ifreq*(1+rnd(6)),p3,ifreq*(2+rnd(2))), 0.8
+	elseif (isound==4) then	
+		ix random 4,10
+		kcx   line -ix,p3,ix 
+		krx line random:i(0.1,4) ,p3, random:i(0.1,4)
+		awterr      wterrain    1, ifreq,kcx, 0, krx/2, krx, -1, -1
+		asig      dcblock awterr ; DC blocking filte
+		asig butterlp asig,2000
+	elseif (isound==5) then ; additive, close frequencies
+		a1 poscil 0.5,ifreq
+		a2 poscil 0.5, ifreq*(1+jspline(0.05, 1, 6))	
+		asig ntrpol a1,a2,0.5+jspline(0.4,0.5,2)
+	elseif (isound==6) then ; pluck with tail
+		kfreq expseg ifreq,p3/2,ifreq,p3/2,ifreq*random:i(0.666,1.333)
+		asig pluck 1, kfreq,ifreq,-1,3,0
+	elseif (isound==7) then ; pluck with tail
+		kfreq expseg ifreq,p3/2,ifreq,p3/2,ifreq*random:i(0.5,2)
+		anoise pinkish 0.8
+		asig rezzy butterbp(anoise, kfreq, kfreq/16),kfreq,100,1
+		asig balance asig, anoise
+
+		
+	
+	else
+		asig pinker
+		asig moogvcf asig, line(ifreq*(1+rnd(6)),p3,ifreq*(2+rnd(2))), random:i(0.5,0.9)
+	endif
+	
+	asig = asig*iamp*aenv
+	;aL,aR pan2 asig, ipan
+	;outs aL*gkVolume,aR*gkVolume	
+	
+	gaSignal[ivoice] = gaSignal[ivoice] + asig
+endin
+
+
+instr sound_old
 	iamp = p4
 	ifreq =  p5
 	ivoice = p6
@@ -412,7 +478,7 @@ endin
   <g>255</g>
   <b>255</b>
  </bgcolor>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>17</x>
   <y>72</y>
@@ -431,7 +497,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBDisplay">
+ <bsbObject type="BSBDisplay" version="2">
   <objectName>display</objectName>
   <x>78</x>
   <y>194</y>
@@ -460,7 +526,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>107</y>
@@ -477,9 +543,9 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 1 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>143</y>
@@ -496,9 +562,9 @@ endin
   <image>/</image>
   <eventLine>i "randomPattern" 0 0 2 0</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>sound1</objectName>
   <x>112</x>
   <y>291</y>
@@ -523,11 +589,11 @@ endin
   </bgcolor>
   <resolution>1.00000000</resolution>
   <minimum>0</minimum>
-  <maximum>5</maximum>
+  <maximum>8</maximum>
   <randomizable group="0">false</randomizable>
-  <value>4</value>
+  <value>1</value>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>button5</objectName>
   <x>45</x>
   <y>251</y>
@@ -546,7 +612,7 @@ endin
   <latch>false</latch>
   <latched>false</latched>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>square1</objectName>
   <x>113</x>
   <y>325</y>
@@ -575,7 +641,7 @@ endin
   <randomizable group="0">false</randomizable>
   <value>0.25</value>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>27</x>
   <y>325</y>
@@ -604,7 +670,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>27</x>
   <y>292</y>
@@ -634,7 +700,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>square2</objectName>
   <x>118</x>
   <y>359</y>
@@ -663,7 +729,7 @@ endin
   <randomizable group="0">false</randomizable>
   <value>0.25</value>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>delayLevel</objectName>
   <x>244</x>
   <y>212</y>
@@ -681,7 +747,7 @@ endin
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>228</x>
   <y>317</y>
@@ -710,7 +776,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>longDelayLevel</objectName>
   <x>318</x>
   <y>213</y>
@@ -728,7 +794,7 @@ endin
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>302</x>
   <y>318</y>
