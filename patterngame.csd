@@ -61,7 +61,7 @@ chnset 0.25, "square1"
 chnset 0.25, "square2"
 chnset 0.25, "square3"
 
-chnset 0.25, "delayLevel"
+chnset 1, "delayLevel"
 chnset 0.1, "longDelayLevel"
 
 seed 0

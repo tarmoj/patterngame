@@ -6,6 +6,98 @@ import QtQuick.Window 2.1
 Window {
     width: 540
     height: 500
+    property int sectionLength: 60// in seconds
+
+
+
+function section1() {
+    console.log("SECTION 2 ==============================")
+    var duration =  2 * sectionLength;
+    scaleBox.currentIndex = 0;
+    voicesRepeater.itemAt(0).squareDuration = 0.25;
+    voicesRepeater.itemAt(1).squareDuration = 0.25;
+    voicesRepeater.itemAt(2).squareDuration = 0.25;
+    squares1.interval = duration *0.75 * 1000
+    squares1.start()
+    instruments1.interval = duration *0.85 * 1000 ;instruments1.start()
+
+
+}
+
+function section2() {
+    console.log("SECTION 2 ==============================")
+
+    var duration =  3 * sectionLength;
+    scaleBox.currentIndex = 1;
+    voicesRepeater.itemAt(0).squareDuration = 1;
+    voicesRepeater.itemAt(1).squareDuration = 1;
+    voicesRepeater.itemAt(2).squareDuration = 1;
+
+    voicesRepeater.itemAt(0).instrument = 3;
+    voicesRepeater.itemAt(1).instrument = 4;
+    voicesRepeater.itemAt(2).instrument = 2;
+    timbreDelay.interval = 5000;
+    timbreDelay.start();
+
+
+}
+
+// different timers to play changes in different sections
+
+Timer {id: squares1; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  { squareTimer.minDuration = 0.15; squareTimer.maxDuration = 0.35; squareTimer.start(); console.log("SQUARES 1 STARTED") }
+}
+
+Timer {id: instruments1; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  { instrumentTimer.minInstrument = 0; instrumentTimer.maxInstrument = 2; instrumentTimer.start(); console.log("INSTRUMENTS 1 STARTED") }
+}
+
+Timer {id: end1; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered: {squareTimer.stop(); instrumentTimer.stop(); section2(); }
+}
+
+Timer {id: timbreDelay; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  {  console.log("TIMBRE DELAY ")
+        if (socket.status == WebSocket.Open)
+                                        socket.sendTextMessage("schedule \"deviationLine\",0, 30, 1, 0");
+    }
+}
+
+
+
+
+Timer {
+    id: squareTimer
+    property double minDuration: 0.15
+    property double maxDuration: 4
+    interval: 2000; running: false; repeat: true
+    triggeredOnStart: false
+    onTriggered: { //
+        var duration = minDuration + Math.random()*(maxDuration-minDuration)
+        duration = (Math.round(duration * 20) / 20).toFixed(2) ; // to round to x.x5 or x.x0
+        var voice = Math.floor(Math.random()*2.9);
+        console.log("voice, duration:",voice, duration)
+        voicesRepeater.itemAt(voice).squareDuration = duration;
+
+    }
+
+}
+
+Timer {
+    id: instrumentTimer
+    property double minInstrument: 0
+    property double maxInstrument: 6
+    interval: 2000; running: false; repeat: true
+    triggeredOnStart: false
+    onTriggered: { //
+        var instrument = minInstrument + Math.round( Math.random()*(maxInstrument-minInstrument) )
+        var voice = Math.floor(Math.random()*2.9);
+        console.log("voice, instrument:",voice, instrument)
+        voicesRepeater.itemAt(voice).instrument = instrument;
+
+    }
+
+}
 
 
 Rectangle {
@@ -163,7 +255,7 @@ Rectangle {
 
             Slider {
                 id: delayLevelSlider
-                value: 0.25
+                value: 1.0
                 stepSize: 0.01
                 width: 80
                 onValueChanged: if (socket.status == WebSocket.Open)
@@ -214,22 +306,12 @@ Rectangle {
 
             Button {
                 text: qsTr("Section 1")
-                onClicked: {
-                    scaleBox.currentIndex = 0;
-                    voicesRepeater.itemAt(0).squareDuration = 0.25;
-                    voicesRepeater.itemAt(1).squareDuration = 0.25;
-                    voicesRepeater.itemAt(2).squareDuration = 0.25;
-                }
+                onClicked: section1()
             }
 
             Button {
                 text: qsTr("Section 2")
-                onClicked: {
-                    scaleBox.currentIndex = 1;
-                    voicesRepeater.itemAt(0).squareDuration = 1;
-                    voicesRepeater.itemAt(1).squareDuration = 1;
-                    voicesRepeater.itemAt(2).squareDuration = 1;
-                }
+                onClicked: section2()
             }
 
             Button {
@@ -277,6 +359,7 @@ Rectangle {
                     border.width: 2
                     property int voice: parent.index
                     property real squareDuration: 0.25
+                    property int instrument:0
 
                     Column {
                         id: voiceColumn
@@ -320,6 +403,7 @@ Rectangle {
                         ComboBox {
                             id: soundCombo
                             model: ["sine", "waveterrain1",  "moogladder",  "fmbell","waveterrain2","additive", "pluck", "reson-noise"]
+                            currentIndex: instrument
                             onCurrentIndexChanged:  if (socket.status == WebSocket.Open)
                                                         socket.sendTextMessage("property,sound"+(voice+1)+","+currentIndex);
                         }

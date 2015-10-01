@@ -6,6 +6,20 @@ Rectangle {
     width: 300
     height: 500
     color: "black"
+    gradient: Gradient {
+        GradientStop {
+            position: 0.00;
+            color: "#000000";
+        }
+        GradientStop {
+            position: 0.92;
+            color: "#5c656d";
+        }
+        GradientStop {
+            position: 1.00;
+            color: "#88b7db";
+        }
+    }
     border.color: "grey"
     property int maxRows: 10
     property int maxColumns: 10

@@ -6,7 +6,7 @@ ApplicationWindow {
     id: mainWindow
     visible: true
     width: 940
-    height: 580
+    height: 600
     title: qsTr("Patterngame server")
     property int clientsCount: 0
     property string mode: "Slendro"
@@ -105,6 +105,16 @@ ApplicationWindow {
     Rectangle {
         id: mainRect
         color: "#1a255c"
+        gradient: Gradient {
+            GradientStop {
+                position: 0.00;
+                color: "#1a255c";
+            }
+            GradientStop {
+                position: 1.00;
+                color: "#a9d2f1";
+            }
+        }
         anchors.fill: parent
         Column {
             anchors.fill:parent
