@@ -6,12 +6,12 @@ import QtQuick.Window 2.1
 Window {
     width: 540
     height: 500
-    property int sectionLength: 60// in seconds
+    property int sectionLength: 40// in seconds
 
 
 
-function section1() {
-    console.log("SECTION 2 ==============================")
+function section1() { // it would be much logical and easy to make these changes within csd, but I want to have the changes displayer, so let's use the QML system
+    console.log("SECTION 1 ==============================")
     var duration =  2 * sectionLength;
     scaleBox.currentIndex = 0;
     voicesRepeater.itemAt(0).squareDuration = 0.25;
@@ -20,6 +20,8 @@ function section1() {
     squares1.interval = duration *0.75 * 1000
     squares1.start()
     instruments1.interval = duration *0.85 * 1000 ;instruments1.start()
+
+    end1.interval = duration *1000; end1.start()
 
 
 }
@@ -36,9 +38,39 @@ function section2() {
     voicesRepeater.itemAt(0).instrument = 3;
     voicesRepeater.itemAt(1).instrument = 4;
     voicesRepeater.itemAt(2).instrument = 2;
-    timbreDelay.interval = 5000;
+
+    timbreDelay.interval = duration/3 *1000
     timbreDelay.start();
 
+    instruments2.interval =  timbreDelay.interval * 0.75 ;instruments2.start(); // instruments start to change before delay starts
+
+    squares2.interval = timbreDelay.interval / 2;
+    squares2.start()
+
+    // second half:
+
+    squares2a.interval = duration*0.55 *1000 ;
+    squares2a.start()
+
+    repetitionDelay.interval = duration *0.666 * 1000;
+    repetitionDelay.start()
+
+    end2.interval= (duration-1) *1000; end2.start()
+
+}
+
+function section3() {
+    var duration = 2 * sectionLength;
+    scaleBox.currentIndex = 2;
+    voicesRepeater.itemAt(0).squareDuration = 0.2;
+    voicesRepeater.itemAt(1).squareDuration = 0.3;
+    voicesRepeater.itemAt(2).squareDuration = 0.5;
+
+    bothDelay.interval = duration*0.25 * 1000 ; bothDelay.start()
+    instruments3a.interval = bothDelay.interval; instruments3a.start()
+
+    squares3.interval = duration *0.7 *1000; squares3.start()
+    instruments3b.interval = duration * 0.8 *1000; instruments3b.start()
 
 }
 
@@ -56,13 +88,48 @@ Timer {id: end1; running: false; repeat: false;   triggeredOnStart: false
     onTriggered: {squareTimer.stop(); instrumentTimer.stop(); section2(); }
 }
 
-Timer {id: timbreDelay; running: false; repeat: false;   triggeredOnStart: false
-    onTriggered:  {  console.log("TIMBRE DELAY ")
-        if (socket.status == WebSocket.Open)
-                                        socket.sendTextMessage("schedule \"deviationLine\",0, 30, 1, 0");
-    }
+Timer {id: end2; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered: {squareTimer.stop(); instrumentTimer.stop();
+        timbreDelay.stop(); longDelayTimer.stop()
+        section3(); }
 }
 
+
+Timer {id: instruments2; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  { instrumentTimer.minInstrument = 2; instrumentTimer.maxInstrument = 5; instrumentTimer.restart(); console.log("INSTRUMENTS 2 STARTED =====================") }
+}
+
+Timer {id: squares2; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  { squareTimer.minDuration = 0.3; squareTimer.maxDuration = 0.75; squareTimer.restart(); console.log("SQUARES 2 STARTED ============================") }
+}
+
+Timer {id: squares2a; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  { squareTimer.minDuration = 0.15; squareTimer.maxDuration = 0.25; squareTimer.restart(); console.log("SQUARES 2A STARTED ============================") }
+}
+
+Timer {id: instruments3; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  { instrumentTimer.minInstrument = 4; instrumentTimer.maxInstrument = 5; instrumentTimer.restart(); console.log("INSTRUMENTS 3 STARTED =====================") }
+}
+
+Timer {id: instruments3a; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  { instrumentTimer.minInstrument = 0; instrumentTimer.maxInstrument = 7; instrumentTimer.restart(); console.log("INSTRUMENTS 3A STARTED =====================") }
+}
+
+
+Timer {id: instruments3b; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  {
+        instrumentTimer.stop()
+        voicesRepeater.itemAt(0).instrument = 7; // all noise
+        voicesRepeater.itemAt(1).instrument = 7;
+        voicesRepeater.itemAt(2).instrument = 7;
+        console.log("INSTRUMENTS 3A STARTED =====================") }
+}
+
+Timer {id: squares3; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  { squareTimer.minDuration = 1; squareTimer.maxDuration = 4;
+        squareTimer.interval = 8000;
+        squareTimer.restart(); console.log("SQUARES 3 STARTED ============================") }
+}
 
 
 
@@ -78,7 +145,6 @@ Timer {
         var voice = Math.floor(Math.random()*2.9);
         console.log("voice, duration:",voice, duration)
         voicesRepeater.itemAt(voice).squareDuration = duration;
-
     }
 
 }
@@ -99,6 +165,45 @@ Timer {
 
 }
 
+
+Timer {id: timbreDelay; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  {  console.log("TIMBRE DELAY =====================")
+        if (socket.status == WebSocket.Open)
+            socket.sendTextMessage("schedule \"deviationLine\",0, 30, 1, 0");
+    }
+}
+
+
+Timer {id: repetitionDelay; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  {  console.log("REPETITION DELAY =====================")
+        longDelayTimer.interval = 4000; longDelayTimer.start()
+        if (socket.status == WebSocket.Open)
+            socket.sendTextMessage("schedule \"deviationLine\",0,30, 0, 1");
+    }
+}
+
+Timer {id: bothDelay; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  {  console.log("BOTH DELAY =====================")
+        if (socket.status == WebSocket.Open)
+            socket.sendTextMessage("schedule \"deviationLine\",0, 60, 1, 1");
+        longDelayTimer.interval = 6000; longDelayTimer.start()
+    }
+}
+
+Timer {id: longDelayTimer; running: false; repeat: false;   triggeredOnStart: false
+    onTriggered:  {
+        var delay = Math.random() // anything bwétween 0..1
+        longDelaySlider.value = delay
+        if (socket.status == WebSocket.Open)
+            socket.sendTextMessage("property,longDelayLevel,"+delay.toString());
+        interval *= 0.9 // and make the next appearance sooner ...
+    }
+}
+
+
+
+
+// END TIMERS -------------------------------------------
 
 Rectangle {
     id: rectangle1
@@ -316,12 +421,7 @@ Rectangle {
 
             Button {
                 text: qsTr("Section 3")
-                onClicked: {
-                    scaleBox.currentIndex = 2;
-                    voicesRepeater.itemAt(0).squareDuration = 0.2;
-                    voicesRepeater.itemAt(1).squareDuration = 0.3;
-                    voicesRepeater.itemAt(2).squareDuration = 0.5;
-                }
+                onClicked: section3()
             }
 
         }
