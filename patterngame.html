@@ -2,6 +2,8 @@
 <html>
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="content-type">
+    <meta name="viewport" content="width=540, initial-scale=0.6, maximum-scale=0.8, minimum-scale=0.5, user-scalable=no" />
+
     <title>Pattern game</title>
     <meta content="Tarmo Johannes" id="author">
 	
@@ -17,10 +19,6 @@
     
     <form name = "myform">
     Your name:<input type="text" id="name" value="Anonymous"  style="font-size:16px"></input><br>
-    Octave/range: <input value=0 name="octave" type="radio">low&nbsp;&nbsp; <input
-      checked="checked" value=1 name="octave" type="radio">middle&nbsp;&nbsp;
-    <input value=2 name="octave" type="radio">high <br>
-    <br>
     <br>
     Choose scale (different set of pitches): 
      <select id="mode" onchange="setMode(parseInt(this.value));"  style="font-size:22px">
@@ -31,7 +29,10 @@
 	<br><br>
 	Tap or click on the green squares to build thes sound pattern.
 	<br>
-    <div id="container"></div>
+    <div id="container"></div><br>
+    Octave/range: <input value=0 name="octave" type="radio">low&nbsp;&nbsp; <input
+      checked="checked" value=1 name="octave" type="radio">middle&nbsp;&nbsp;
+    <input value=2 name="octave" type="radio">high <br>
     <br>
      Send to speaker: 
     <input checked="checked" value=1 name="speaker" type="radio">1 

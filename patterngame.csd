@@ -6,7 +6,7 @@
 <CsInstruments>
 
 sr = 44100
-nchnls = 2;8;2
+nchnls = 2 ;8;2
 0dbfs = 1
 ksmps = 4
 

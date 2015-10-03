@@ -6,13 +6,14 @@ import QtQuick.Window 2.1
 Window {
     width: 540
     height: 500
-    property int sectionLength: 40// in seconds
+    property int sectionLength: 60// in seconds
+    title: "pattern-server-control"
 
 
 
 function section1() { // it would be much logical and easy to make these changes within csd, but I want to have the changes displayer, so let's use the QML system
     console.log("SECTION 1 ==============================")
-    var duration =  2 * sectionLength;
+    var duration =  1.5 * sectionLength;
     scaleBox.currentIndex = 0;
     voicesRepeater.itemAt(0).squareDuration = 0.25;
     voicesRepeater.itemAt(1).squareDuration = 0.25;
