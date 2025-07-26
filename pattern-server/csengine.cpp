@@ -139,8 +139,9 @@ void CsEngine::handleChannelChange(QString channel, double value)
 void CsEngine::setChannel(QString channel, MYFLT value)
 {
     //qDebug()<<"setChannel "<<channel<<" value: "<<value;
-    cs.SetChannel(channel.toLocal8Bit(), value);
+	cs.SetChannel(channel.toLocal8Bit(), value);
 }
+
 
 void CsEngine::csEvent(QString event_string)
 {
