@@ -46,14 +46,9 @@
         <v-container id="matrix">
           <div class="button-grid">
             <div v-for="rowIndex in numberOfNotes" :key="rowIndex" class="grid-row">
-              <v-btn
-                v-for="colIndex in numberOfNotes"
-                :key="colIndex"
+              <v-btn v-for="colIndex in numberOfNotes" :key="colIndex"
                 :color="buttonMatrix[rowIndex - 1][colIndex - 1] ? 'success' : 'grey'"
-                @click="toggleButton(rowIndex - 1, colIndex - 1)"
-                class="rounded-square"
-                elevation="2"
-              ></v-btn>
+                @click="toggleButton(rowIndex - 1, colIndex - 1)" class="rounded-square" elevation="2"></v-btn>
             </div>
           </div>
           </v-row>
@@ -65,7 +60,16 @@
           <v-select v-model="selectedMode" :items="modes" label="Select a scale" item-value="value" item-title="title"
             @update:model-value="setMode" outlined>
           </v-select>
+
+          <v-radio-group inline v-model="voice" label="Octave/Range">
+            <v-radio label="Low" value="0"></v-radio>
+            <v-radio label="Middle" value="1"></v-radio>
+            <v-radio label="High" value="2"></v-radio>
+          </v-radio-group>
+          
         </v-container>
+      
+      
 
     </v-app>
 
@@ -73,7 +77,7 @@
   </div>
 
   <script>
-    const { createApp, ref, watch } = Vue
+    const { createApp, ref, watch } = Vue;
     const { createVuetify } = Vuetify;
 
     const vuetify = createVuetify({
@@ -85,6 +89,7 @@
 
     createApp({
       setup() {
+        // properties -----------------
         const message = ref('Pattern Game')
         const audioLoaded = ref(false);
 
@@ -101,6 +106,10 @@
           { value: 1, title: "Harrison's pelog (7 steps)" },
           { value: 2, title: "Bohlen-Pierce justtone (9 steps)" },
         ]);
+
+        const voice = ref("1");
+
+        // methods ------------------
 
         const setMode = (value) => {
           console.log("Selected mode:", value);
@@ -123,8 +132,7 @@
           if (buttonMatrix.value[row][col]) {
             //oscil.playSound(baseFrequency * steps[this.getAttr("pitch_index")] * (1 << voice), 0, 0.75);
             const step = numberOfNotes.value - row - 1; // Invert row index for sound frequency
-            const voice = 1;
-            oscil.playSound(baseFrequency * steps[step] * (1 << voice), 0, 0.75);
+            oscil.playSound(baseFrequency * steps[step] * (1 << parseInt(voice.value)) , 0, 0.75);
           }
         };
 
@@ -146,6 +154,8 @@
           );
         });
 
+        watch
+
         return {
           numberOfNotes, audioLoaded, proxyInitAudio,
           buttonMatrix,
@@ -153,6 +163,7 @@
           modes,
           setMode,
           toggleButton,
+          voice
         };
       }
 
@@ -162,30 +173,38 @@
 
   <style>
     .button-grid {
-    display: flex;
-    flex-direction: column; /* Stack rows vertically */
-    gap: 5px; /* Space between rows */
-    width: 100%; /* Full width of the container */
-  }
+      display: flex;
+      flex-direction: column;
+      /* Stack rows vertically */
+      gap: 5px;
+      /* Space between rows */
+      width: 100%;
+      /* Full width of the container */
+    }
 
-  .grid-row {
-    display: flex;
-    gap: 5px; /* Space between buttons in a row */
-    justify-content: center; /* Center buttons horizontally */
-  }
+    .grid-row {
+      display: flex;
+      gap: 5px;
+      /* Space between buttons in a row */
+      justify-content: center;
+      /* Center buttons horizontally */
+    }
 
-  .rounded-square {
-    aspect-ratio: 1 / 1; /* Ensure buttons are square */
-    width: calc(100% / var(--number-of-notes)); /* Dynamic width based on number of notes */
-    height: auto; /* Automatically adjust height to match width */
-    border-radius: 8px; /* Rounded corners */
-  }
+    .rounded-square {
+      aspect-ratio: 1 / 1;
+      /* Ensure buttons are square */
+      width: calc(100% / var(--number-of-notes));
+      /* Dynamic width based on number of notes */
+      height: auto;
+      /* Automatically adjust height to match width */
+      border-radius: 8px;
+      /* Rounded corners */
+    }
 
     .v-btn {
       min-width: 0 !important;
       /* Override Vuetify's default min-width */
     }
-
   </style>
 
 
