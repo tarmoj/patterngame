@@ -270,28 +270,23 @@ function drawEverything() {
 
 
 
-function setMode(mode) {
-	//var mode = parseInt(document.myform.mode.value);
-	document.myform.mode.value = mode;
-	//document.myform.mode.disabled = true;
+function setModeData(mode) {
+
 	switch (mode) {
 		case 0:
 			MAX_NOTES = 6;
 			MAX_PITCHES = 6;
 			steps = [1, 8 / 7, 4 / 3, 14 / 9, 16 / 9, 2];
-			drawEverything();
 			break;
 		case 1:
 			MAX_NOTES = 8;
 			MAX_PITCHES = 8;
 			steps = [1, 35 / 32, 5 / 4, 21 / 16, 49 / 32, 105 / 64, 7 / 4, 2]; // pelog-harrsion
-			drawEverything();
 			break;
 		case 2:
 			MAX_NOTES = 10;
 			MAX_PITCHES = 10;
 			steps = [1, 25 / 21, 9 / 7, 7 / 5, 5 / 3, 9 / 5, 15 / 7, 7 / 3, 25 / 9, 3 / 1];
-			drawEverything();
 			break;
 	}
 }

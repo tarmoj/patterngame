@@ -104,20 +104,9 @@
 
         const setMode = (value) => {
           console.log("Selected mode:", value);
+          setModeData(value);
           selectedMode.value = value;
-          switch (value) {
-            case 0:
-              numberOfNotes.value = 5;
-              break;
-            case 1:
-              numberOfNotes.value = 7;
-              break;
-            case 2:
-              numberOfNotes.value = 9;
-              break;
-            default:
-              numberOfNotes.value = 5; // Default to 5 if no valid mode is selected
-          }
+          numberOfNotes.value = MAX_NOTES;
           // Here you can add logic to handle the mode change
 
 
@@ -131,6 +120,12 @@
             }
           }
           buttonMatrix.value[row][col] = !buttonMatrix.value[row][col];
+          if (buttonMatrix.value[row][col]) {
+            //oscil.playSound(baseFrequency * steps[this.getAttr("pitch_index")] * (1 << voice), 0, 0.75);
+            const step = numberOfNotes.value - row - 1; // Invert row index for sound frequency
+            const voice = 1;
+            oscil.playSound(baseFrequency * steps[step] * (1 << voice), 0, 0.75);
+          }
         };
 
         const proxyInitAudio = () => {
