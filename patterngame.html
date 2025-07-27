@@ -44,17 +44,24 @@
       <v-container id="mainContainer" v-show="audioLoaded">
 
         <v-container id="matrix">
-          <v-row v-for="rowIndex in numberOfNotes" :key="rowIndex" class="d-flex justify-center">
-            <v-col v-for="colIndex in numberOfNotes" :key="colIndex" cols="auto">
-              <v-btn :color="buttonMatrix[rowIndex - 1][colIndex - 1] ? 'success' : 'grey'"
-                @click="toggleButton(rowIndex - 1, colIndex - 1)" class="rounded-square" elevation="2"></v-btn>
-            </v-col>
+          <div class="button-grid">
+            <div v-for="rowIndex in numberOfNotes" :key="rowIndex" class="grid-row">
+              <v-btn
+                v-for="colIndex in numberOfNotes"
+                :key="colIndex"
+                :color="buttonMatrix[rowIndex - 1][colIndex - 1] ? 'success' : 'grey'"
+                @click="toggleButton(rowIndex - 1, colIndex - 1)"
+                class="rounded-square"
+                elevation="2"
+              ></v-btn>
+            </div>
+          </div>
           </v-row>
 
         </v-container>
 
         <v-container id="controls">
-          <p>Choose scale (different set of pitches):</p>
+          <p>Choose the scale (different set of pitches):</p>
           <v-select v-model="selectedMode" :items="modes" label="Select a scale" item-value="value" item-title="title"
             @update:model-value="setMode" outlined>
           </v-select>
@@ -113,11 +120,11 @@
           }
           // Here you can add logic to handle the mode change
 
-          // Call your function here
-          // Example: setMode(value);
+
         };
 
         const toggleButton = (row, col) => {
+          console.log(`Toggling button at row ${row}, col ${col}`);
           for (let i = 0; i < numberOfNotes.value; i++) {
             if (i !== row && buttonMatrix.value[i][col]) {
               buttonMatrix.value[i][col] = false; // Turn off other buttons in the column
@@ -159,25 +166,31 @@
   </script>
 
   <style>
-    .rounded-square {
-      width: 50px !important;
-      height: 50px !important;
-      border-radius: 8px;
-      padding: 0;
-      /* Remove default padding */
-      margin: 0;
-      /* Remove default margin */
-    }
+    .button-grid {
+    display: flex;
+    flex-direction: column; /* Stack rows vertically */
+    gap: 5px; /* Space between rows */
+    width: 100%; /* Full width of the container */
+  }
+
+  .grid-row {
+    display: flex;
+    gap: 5px; /* Space between buttons in a row */
+    justify-content: center; /* Center buttons horizontally */
+  }
+
+  .rounded-square {
+    aspect-ratio: 1 / 1; /* Ensure buttons are square */
+    width: calc(100% / var(--number-of-notes)); /* Dynamic width based on number of notes */
+    height: auto; /* Automatically adjust height to match width */
+    border-radius: 8px; /* Rounded corners */
+  }
 
     .v-btn {
       min-width: 0 !important;
       /* Override Vuetify's default min-width */
     }
 
-    .v-col {
-      padding: 5px !important;
-      /* Remove padding between columns */
-    }
   </style>
 
 
