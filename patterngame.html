@@ -1,74 +1,189 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta content="text/html; charset=utf-8" http-equiv="content-type">
-    <meta name="viewport" content="width=540, initial-scale=0.6, maximum-scale=0.8, minimum-scale=0.3, user-scalable=yes" />
 
-    <title>Pattern game</title>
-    <meta content="Tarmo Johannes" id="author">
-	
-	<link type="text/css" rel="stylesheet" href="soundgames.css">
-	
-	<script src="kinetic-v5.1.0.js"></script> <!-- image movement etc-->
-        <script src="ws-functions.js"></script> <!-- websocket functions -->
-	<script defer="defer" src="patterngame-ui.js">	</script>
-  </head>
-  <body>
-	<span style='margin-left:440px'><small><i><a href="patterngame_est.html">Eesti</a></i></small></span>
-  <h1>Pattern game</h1><br>
-    
-    <form name = "myform">
-    Your name:<input type="text" id="name" value="Anonymous"  style="font-size:16px"></input><br>
-    <br>
-    Choose scale (different set of pitches): 
-     <select id="mode" onchange="setMode(parseInt(this.value));"  style="font-size:22px">
-	<option value="0">(Pseudo) slendro (5 steps)</option>
-	<option value="1">Harrison's pelog (7 steps) </option>
-	<option value="2">Bohlen-Pierce justtone (9 steps)</option>
-	</select> 
-	<br><br>
-	Tap or click on the green squares to build thes sound pattern.
-	<br>
-    <div id="container"></div><br>
-    Octave/range: <input value=0 name="octave" type="radio">low&nbsp;&nbsp; <input
-      checked="checked" value=1 name="octave" type="radio">middle&nbsp;&nbsp;
-    <input value=2 name="octave" type="radio">high <br>
-    <br>
-     Send to speaker: 
-    <input checked="checked" value=1 name="speaker" type="radio">1 
-    <input value=2 name="speaker" type="radio">2
-    <input value=3 name="speaker" type="radio">3
-    <input value=4 name="speaker" type="radio">4
-    <input value=5 name="speaker" type="radio">5
-    <input value=6 name="speaker" type="radio">6
-    <input value=7 name="speaker" type="radio">7
-    <input value=8 name="speaker" type="radio">8
-    <br>
-	<br>
-    Play the melody <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=parseInt(repeatCount.value)+1"
-    onchange="oscil.repeatCount=parseInt(this.value)"> 
-    <output name="repeat_label" for="repeatCount" id="repeat_label">0</output>
-    times<br><br>
-    Start repetition after <input type="range" class="range" id="delay" min=2 max=10 step=1 value=4 onchange="oscil.delay=parseInt(this.value)" oninput="delay_label.value=delay.value"> 
-    <output name="delay_label" for="delay" id="delay_label">4</output> 
-    units (square durations).
-    <br><br><br>
-    <button type="button" class="button" id="listenButton" onclick="oscil.play()">Listen</button>  
-    <button type="button" class="button" id="sendButton" onclick="sendEvent()" disabled="true">Send to server</button>
-    <br>
-    <br>
-   
-    <div id="messageText"> </div><br>
-    <br>
-    
-    Server address: <input value="ws://192.168.1.199:10010/ws" id="url" type="text"><br>
-    <button type="button" id="connectButton" onclick="doConnect();">Connect</button>
-    <br>
-    <br>
-    <p><textarea id="outputtext" rows="5" cols="30" readonly></textarea> </p>
-   
-	</form>
-   
-   
-  </body>
+<head>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type">
+  <meta name="viewport"
+    content="width=540, initial-scale=0.6, maximum-scale=0.8, minimum-scale=0.3, user-scalable=yes" />
+
+  <title>Pattern game</title>
+  <meta content="Tarmo Johannes" id="author">
+
+  <!-- <link type="text/css" rel="stylesheet" href="soundgames.css"> -->
+  <!-- Vuetify CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.1.0/dist/vuetify.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/@mdi/font/css/materialdesignicons.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+
+  <script src="ws-functions.js"></script> <!-- websocket functions -->
+  <script defer="defer" src="patterngame-ui.js">	</script>
+
+  <!-- Vue.js -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <!-- Vuetify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.0/dist/vuetify.min.js"></script>
+
+</head>
+
+<body>
+
+  <div id="app">
+    <v-app>
+      <v-container class="text-center">
+        <h1>Pattern Game</h1>
+      </v-container>
+
+      <v-container v-show="!audioLoaded">
+        <p>Click the button below to initialize audio.</p>
+        <v-btn @click="proxyInitAudio" v-show="!audioLoaded" color="primary">Start</v-btn>
+        <!-- <v-alert v-model="audioLoaded" type="success" timeout="3000">Audio successfully loaded!</v-alert> -->
+
+      </v-container>
+
+      <v-container id="mainContainer" v-show="audioLoaded">
+
+        <v-container id="matrix">
+          <v-row v-for="rowIndex in numberOfNotes" :key="rowIndex" class="d-flex justify-center">
+            <v-col v-for="colIndex in numberOfNotes" :key="colIndex" cols="auto">
+              <v-btn :color="buttonMatrix[rowIndex - 1][colIndex - 1] ? 'success' : 'grey'"
+                @click="toggleButton(rowIndex - 1, colIndex - 1)" class="rounded-square" elevation="2"></v-btn>
+            </v-col>
+          </v-row>
+
+        </v-container>
+
+        <v-container id="controls">
+          <p>Choose scale (different set of pitches):</p>
+          <v-select v-model="selectedMode" :items="modes" label="Select a scale" item-value="value" item-title="title"
+            @update:model-value="setMode" outlined>
+          </v-select>
+        </v-container>
+
+    </v-app>
+
+
+  </div>
+
+  <script>
+    const { createApp, ref, watch } = Vue
+    const { createVuetify } = Vuetify;
+
+    const vuetify = createVuetify({
+      theme: {
+        defaultTheme: 'dark', // Set the default theme to dark
+      },
+    });
+
+
+    createApp({
+      setup() {
+        const message = ref('Pattern Game')
+        const audioLoaded = ref(false);
+
+        const numberOfNotes = ref(5); // Default number of notes
+        const buttonMatrix = ref(
+          Array.from({ length: numberOfNotes.value }, () =>
+            Array.from({ length: numberOfNotes.value }, () => false)
+          )
+        );
+
+        const selectedMode = ref(0); // Default selected mode
+        const modes = ref([
+          { value: 0, title: "(Pseudo) slendro (5 steps)" },
+          { value: 1, title: "Harrison's pelog (7 steps)" },
+          { value: 2, title: "Bohlen-Pierce justtone (9 steps)" },
+        ]);
+
+        const setMode = (value) => {
+          console.log("Selected mode:", value);
+          selectedMode.value = value;
+          switch (value) {
+            case 0:
+              numberOfNotes.value = 5;
+              break;
+            case 1:
+              numberOfNotes.value = 7;
+              break;
+            case 2:
+              numberOfNotes.value = 9;
+              break;
+            default:
+              numberOfNotes.value = 5; // Default to 5 if no valid mode is selected
+          }
+          // Here you can add logic to handle the mode change
+
+          // Call your function here
+          // Example: setMode(value);
+        };
+
+        const toggleButton = (row, col) => {
+          for (let i = 0; i < numberOfNotes.value; i++) {
+            if (i !== row && buttonMatrix.value[i][col]) {
+              buttonMatrix.value[i][col] = false; // Turn off other buttons in the column
+            }
+          }
+          buttonMatrix.value[row][col] = !buttonMatrix.value[row][col];
+        };
+
+        const proxyInitAudio = () => {
+          if (!audioLoaded.value) {
+            initAudio();
+            audioLoaded.value = true;
+            message.value = 'Audio initialized!';
+          } else {
+            message.value = 'Audio already initialized.';
+          }
+        };
+
+
+        // Watch for changes to numberOfNotes and update buttonMatrix
+        watch(numberOfNotes, (newValue) => {
+          buttonMatrix.value = Array.from({ length: newValue }, () =>
+            Array.from({ length: newValue }, () => false)
+          );
+        });
+
+        return {
+          numberOfNotes, audioLoaded, proxyInitAudio,
+          buttonMatrix,
+          selectedMode,
+          modes,
+          setMode,
+          toggleButton,
+        };
+      }
+
+    }).use(vuetify).mount("#app");
+
+  </script>
+
+  <style>
+    .rounded-square {
+      width: 50px !important;
+      height: 50px !important;
+      border-radius: 8px;
+      padding: 0;
+      /* Remove default padding */
+      margin: 0;
+      /* Remove default margin */
+    }
+
+    .v-btn {
+      min-width: 0 !important;
+      /* Override Vuetify's default min-width */
+    }
+
+    .v-col {
+      padding: 5px !important;
+      /* Remove padding between columns */
+    }
+  </style>
+
+
+
+
+
+</body>
+
 </html>
