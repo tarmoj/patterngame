@@ -5,8 +5,8 @@
 </CsOptions>
 <CsInstruments>
 
-sr = 44100
-nchnls = 8;2
+sr = 48000 ;44100
+nchnls = 2;8;2
 0dbfs = 1
 ksmps = 4
 
@@ -112,7 +112,7 @@ loophere:
 	
 	schedule "playPattern",0,0,  int(random:i(0,4)), int(random:i(2,8)), ivoice, int(random:i(1,9))
 	if (iloop>0) then
-		schedule	"randomPattern", (giPatternLength+1)*i(gkSquareDuration[ivoice]), 0, ivoice, iloop
+		schedule	"randomPattern", (giPatternLength+1)*i(gkSquareDuration, ivoice), 0, ivoice, iloop
 	endif
 endin
 
@@ -182,7 +182,7 @@ instr playPattern,66 ; name and number to bea able to call by number from host ;
 	irepeatAfter = p5 ; repeat after given squareDurations
 	ivoice = p6 ; three voices
 	ipanOrSpeaker = (p7==0) ? int(random:i(1,7)) : p7; number of speaker if 8 channels, otherwise expresse pan 1-left, 8- right
-	itotalTime = giPatternLength*i(gkSquareDuration[ivoice]) + itimes*irepeatAfter*i(gkSquareDuration[ivoice])
+	itotalTime = giPatternLength*i(gkSquareDuration,ivoice) + itimes*irepeatAfter*i(gkSquareDuration,ivoice)
 	if (frac(p1)==0) then 
 		iloopPlay = nstrnum("loopPlay") + (ivoice+1)/10
 	else
@@ -192,7 +192,7 @@ instr playPattern,66 ; name and number to bea able to call by number from host ;
 	print ivoice, itotalTime
 	; TODO: how to handle csound-played pattern only? ie, not sent by user?
 	
-	if (frac(iloopPlay)>0.05 && i(gkIsPlaying[ivoice])==1) then ; if loopPlay is already on and the instrument is called by user (ie without fractional part), don't start it and stop here.
+	if (frac(iloopPlay)>0.05 && i(gkIsPlaying,ivoice)==1) then ; if loopPlay is already on and the instrument is called by user (ie without fractional part), don't start it and stop here.
 		turnoff
 	endif
 		;schedule iloopPlay, 0, itotalTime,  itimes, irepeatAfter, ivoice, ipanOrSpeaker ; set the loop player to be on for pattern+ repetitions;
@@ -279,7 +279,7 @@ instr sound
 	;aenv expseg 0.0001, iatt, 1, p3-iatt, 0.0001
 	aenv adsr 0.01,0.01,0.6, p3/2
 	; TODO: proovi adsr
-	isound = i(gkSoundType[ivoice]) ;chnget "sound"
+	isound = i(gkSoundType,ivoice) ;chnget "sound"
 	if (isound==0) then 
 		asig poscil 1,ifreq ;,giSine
 		asig chebyshevpoly asig, 0, 1, rnd(0.2), rnd(0.1),rnd(0.1), rnd(0.1), rnd(0.05), rnd(0.03) ; add some random timbre
@@ -339,7 +339,7 @@ instr sound_old
 	;aenv expseg 0.0001, iatt, 1, p3-iatt, 0.0001
 	aenv adsr 0.01,0.01,1, p3/2
 	; TODO: proovi adsr
-	isound = i(gkSoundType[ivoice]) ;chnget "sound"
+	isound = i(gkSoundType,ivoice) ;chnget "sound"
 	if (isound==0) then 
 		asig poscil 1,ifreq ;,giSine
 		asig chebyshevpoly asig, 0, 1, rnd(0.2), rnd(0.1),rnd(0.1), rnd(0.1), rnd(0.05), rnd(0.03) ; add some random timbre
@@ -395,7 +395,7 @@ mark1:
 	endif
 	;gkIsPlaying[ivoice] = gkIsPlaying[ivoice] + 1 ; to allow more than 1 instruments to play
 	
-	iloopTime = irepeatAfter * i(gkSquareDuration[ivoice])
+	iloopTime = irepeatAfter * i(gkSquareDuration,ivoice)
 	;ilastLoop = itimes * irepeatAfter * i(gkSquareDuration[ivoice])
 	prints "LOOPPLAY"
 	print itimes, irepeatAfter, iloopTime;, ilastLoop
@@ -464,6 +464,8 @@ endin
 
 </CsScore>
 </CsoundSynthesizer>
+
+
 
 
 <bsbPanel>
@@ -605,7 +607,7 @@ endin
   <minimum>0</minimum>
   <maximum>8</maximum>
   <randomizable group="0">false</randomizable>
-  <value>1</value>
+  <value>5</value>
  </bsbObject>
  <bsbObject version="2" type="BSBButton">
   <objectName>button5</objectName>
@@ -765,7 +767,7 @@ endin
   <description/>
   <minimum>0.00000000</minimum>
   <maximum>2.00000000</maximum>
-  <value>0.25000000</value>
+  <value>1.00000000</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
