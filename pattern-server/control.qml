@@ -4,8 +4,8 @@ import QtQuick.Controls 1.2
 import QtQuick.Window 2.1
 
 Window {
-    width: 540
-    height: 500
+    width: 600
+    height: 720
     property int sectionLength: 60// in seconds
     title: "pattern-server-control"
 
@@ -441,8 +441,8 @@ Rectangle {
 
 
                 Rectangle {
-                    width: 160
-                    height: 240
+                    width: 180
+                    height: 360
                     //"#f1c112"
                     border.color: "black"
                     radius: 10
