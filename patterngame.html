@@ -34,7 +34,11 @@
       checked="checked" value=1 name="octave" type="radio">middle&nbsp;&nbsp;
     <input value=2 name="octave" type="radio">high <br>
     <br>
-     Send to speaker: 
+    <p>
+    Pan: L <input id="pan"  type="range" class="range" min="1" max="8" step="0.1" value="4" style="width:200px;"> R
+    </p>
+    
+     <!-- Send to speaker: 
     <input checked="checked" value=1 name="speaker" type="radio">1 
     <input value=2 name="speaker" type="radio">2
     <input value=3 name="speaker" type="radio">3
@@ -42,7 +46,7 @@
     <input value=5 name="speaker" type="radio">5
     <input value=6 name="speaker" type="radio">6
     <input value=7 name="speaker" type="radio">7
-    <input value=8 name="speaker" type="radio">8
+    <input value=8 name="speaker" type="radio">8 -->
     <br>
 	<br>
     Play the melody <input type="range" class="range" id="repeatCount" min=0 max=5 step=1 value=0 oninput="repeat_label.value=parseInt(repeatCount.value)+1"

@@ -156,24 +156,26 @@
 		//console.log(padding, square_width);
 		//stage.setHeight();
         
-        var layer = new Kinetic.Layer();
+		var layer = new Kinetic.Layer();
         
-        var label1 =  new Kinetic.Text({ x: 4, y: 4,text: "1", fill: 'yellow', fontSize: 24  });
-        layer.add(label1);
-        var label2 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 4,text: "2", fill: 'yellow', fontSize: 24  });
-        layer.add(label2);
-        var label3 =  new Kinetic.Text({ x: 4, y: 150,text: "3", fill: 'yellow', fontSize: 24  });
-        layer.add(label3);
-        var label4 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 150,text: "4", fill: 'yellow', fontSize: 24  });
-        layer.add(label4);
-        var label5 =  new Kinetic.Text({ x: 4, y: 350,text: "5", fill: 'yellow', fontSize: 24  });
-        layer.add(label5);
-        var label6 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 350,text: "6", fill: 'yellow', fontSize: 24  });
-        layer.add(label6);
-        var label7 =  new Kinetic.Text({ x: stage.getWidth()/2+4, y: 4,text: "7", fill: 'yellow', fontSize: 24  });
-        layer.add(label7);
-        var label8 =  new Kinetic.Text({ x: stage.getWidth()/2+4, y: 440,text: "8", fill: 'yellow', fontSize: 24  });
-        layer.add(label8);
+        // skip drawing speaker positions
+
+		// var label1 =  new Kinetic.Text({ x: 4, y: 4,text: "1", fill: 'yellow', fontSize: 24  });
+        // layer.add(label1);
+        // var label2 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 4,text: "2", fill: 'yellow', fontSize: 24  });
+        // layer.add(label2);
+        // var label3 =  new Kinetic.Text({ x: 4, y: 150,text: "3", fill: 'yellow', fontSize: 24  });
+        // layer.add(label3);
+        // var label4 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 150,text: "4", fill: 'yellow', fontSize: 24  });
+        // layer.add(label4);
+        // var label5 =  new Kinetic.Text({ x: 4, y: 350,text: "5", fill: 'yellow', fontSize: 24  });
+        // layer.add(label5);
+        // var label6 =  new Kinetic.Text({ x: stage.getWidth()-20, y: 350,text: "6", fill: 'yellow', fontSize: 24  });
+        // layer.add(label6);
+        // var label7 =  new Kinetic.Text({ x: stage.getWidth()/2+4, y: 4,text: "7", fill: 'yellow', fontSize: 24  });
+        // layer.add(label7);
+        // var label8 =  new Kinetic.Text({ x: stage.getWidth()/2+4, y: 440,text: "8", fill: 'yellow', fontSize: 24  });
+        // layer.add(label8);
         
         
         
@@ -307,7 +309,8 @@
 		parameters.push(getRadioValue("octave"));
 		parameters.push(document.myform.repeatCount.value);
 		parameters.push(document.myform.delay.value);
-		parameters.push(getRadioValue("speaker"));
+		//parameters.push(getRadioValue("speaker"));
+		parameters.push(document.myform.pan.value);
 		parameters.push("steps:")
 		// add all pitchindexes (either step number of -1 if nunselected
 		for (var i=0;i<MAX_NOTES; i++) {

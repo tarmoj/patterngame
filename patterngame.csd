@@ -5,7 +5,7 @@
 </CsOptions>
 <CsInstruments>
 
-sr = 48000 ;44100
+sr = 44100
 nchnls = 2;8;2
 0dbfs = 1
 ksmps = 4
@@ -468,6 +468,8 @@ endin
 
 
 
+
+
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
@@ -482,7 +484,7 @@ endin
   <g>255</g>
   <b>255</b>
  </bgcolor>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>17</x>
   <y>72</y>
@@ -504,7 +506,7 @@ endin
   <latched>false</latched>
   <fontsize>10</fontsize>
  </bsbObject>
- <bsbObject version="2" type="BSBDisplay">
+ <bsbObject type="BSBDisplay" version="2">
   <objectName>display</objectName>
   <x>78</x>
   <y>194</y>
@@ -535,7 +537,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>107</y>
@@ -557,7 +559,7 @@ endin
   <latched>false</latched>
   <fontsize>10</fontsize>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>play pattern</objectName>
   <x>19</x>
   <y>143</y>
@@ -579,7 +581,7 @@ endin
   <latched>false</latched>
   <fontsize>10</fontsize>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>sound1</objectName>
   <x>112</x>
   <y>291</y>
@@ -609,7 +611,7 @@ endin
   <randomizable group="0">false</randomizable>
   <value>5</value>
  </bsbObject>
- <bsbObject version="2" type="BSBButton">
+ <bsbObject type="BSBButton" version="2">
   <objectName>button5</objectName>
   <x>45</x>
   <y>251</y>
@@ -631,7 +633,7 @@ endin
   <latched>false</latched>
   <fontsize>10</fontsize>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>square1</objectName>
   <x>113</x>
   <y>325</y>
@@ -661,7 +663,7 @@ endin
   <randomizable group="0">false</randomizable>
   <value>0.25</value>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>27</x>
   <y>325</y>
@@ -692,7 +694,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>0</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>27</x>
   <y>292</y>
@@ -724,7 +726,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>0</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBSpinBox">
+ <bsbObject type="BSBSpinBox" version="2">
   <objectName>square2</objectName>
   <x>118</x>
   <y>359</y>
@@ -754,7 +756,7 @@ endin
   <randomizable group="0">false</randomizable>
   <value>0.25</value>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>delayLevel</objectName>
   <x>244</x>
   <y>212</y>
@@ -773,7 +775,7 @@ endin
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>228</x>
   <y>317</y>
@@ -804,7 +806,7 @@ endin
   <borderradius>1</borderradius>
   <borderwidth>0</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>longDelayLevel</objectName>
   <x>318</x>
   <y>213</y>
@@ -823,7 +825,7 @@ endin
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBLabel">
+ <bsbObject type="BSBLabel" version="2">
   <objectName/>
   <x>302</x>
   <y>318</y>
