@@ -117,7 +117,7 @@ Rectangle {
                 spacing: 4
                 Repeater {
                     model: maxRows
-                    Text {color:"red"; text: 10-index; font.pixelSize: 17 }
+                    Text {color:"red"; text: 10-index; font.pointSize: 8.5 }
                 }
             }
 
