@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type">
+    <meta name="viewport" content="width=540, initial-scale=0.6, maximum-scale=0.8, minimum-scale=0.3, user-scalable=yes" />
+
+    <title>Repetitions, Patterns</title>
+    <meta content="Tarmo Johannes" id="author">
+    <link type="text/css" rel="stylesheet" href="soundgames.css">
+    <style>
+      body {
+        text-align: center;
+        font-size: 1.25em; /* Makes all text 1.5 times larger */
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 2em; /* Even larger for main heading */
+      }
+      
+      h2 {
+        font-size: 1.5em; /* Larger for subheadings */
+      }
+      
+      #instructionDiv {
+        margin-top: 40px;
+        display: none; /* Hide by default */
+
+      }
+      
+      #instructionDiv p {
+        font-size: 1.1em; /* Slightly larger for instructions */
+        margin: 20px 0;
+        
+      }
+      
+      img {
+        max-width: 100%;
+        height: auto;
+        margin-top: 20px;
+      }
+    </style>
+
+  </head>  
+  <body>
+    <h2>Tarmo Johannes</h2>
+    <h1>Partitipination concerts (2014-15)</h1>
+    <h2>Repetitions, patterns (delay)</h2>
+    <br>
+    <p>Partipation game</p>
+    <p>*</p>
+    <p><b>Pierre Jodlowski</b> - <i>Limite circulaire</i> for flute and tape </p>
+    <br>
+    <button id="goButton" onclick="showInstructions()">Go</button>
+  
+    <div id ="instructionDiv">
+    <p>Connect to wifi: pattern-wifi(-5G)</p>
+    <br>
+    <p>Open in your browser: <b><a href="http://192.168.1.199">http://192.168.1.199</a></b></p>
+    <p>Or scan: </p>
+    <img src="./qr-code-patternagame.png" width="500px">  
+    </div>
+
+    <script>
+      function showInstructions() {
+        document.getElementById('instructionDiv').style.display = 'block';
+        document.getElementById('goButton').style.display = 'none'; // Optional: hide the button after clicking
+      }
+    </script>
+  </body>
+</html>

@@ -13,7 +13,7 @@ Window {
 
 function section1() { // it would be much logical and easy to make these changes within csd, but I want to have the changes displayer, so let's use the QML system
     console.log("SECTION 1 ==============================")
-    var duration =  1.5 * sectionLength;
+    var duration =  1.5 * sectionLength; //1.5 * sectionLength;
     scaleBox.currentIndex = 0;
     voicesRepeater.itemAt(0).squareDuration = 0.25;
     voicesRepeater.itemAt(1).squareDuration = 0.25;
@@ -30,7 +30,7 @@ function section1() { // it would be much logical and easy to make these changes
 function section2() {
     console.log("SECTION 2 ==============================")
 
-    var duration =  3 * sectionLength;
+    var duration =  2 * sectionLength; // 3 * sectionLength;
     scaleBox.currentIndex = 1;
     voicesRepeater.itemAt(0).squareDuration = 1;
     voicesRepeater.itemAt(1).squareDuration = 1;
@@ -61,7 +61,7 @@ function section2() {
 }
 
 function section3() {
-    var duration = 2 * sectionLength;
+    var duration = 1.5 * sectionLength;  //2 * sectionLength;
     scaleBox.currentIndex = 2;
     voicesRepeater.itemAt(0).squareDuration = 0.2;
     voicesRepeater.itemAt(1).squareDuration = 0.3;
